@@ -1,11 +1,19 @@
-function App() {
+import Header from './components/layout/Header';
+import Sidebar from './components/layout/Sidebar';
+import AppRouter from './routes';
+
+const App = () => {
   return (
-    <div className="h-screen flex items-center justify-center bg-gray-100">
-      <h1 className="text-3xl font-bold text-blue-500">
-        Tailwind + TypeScript 정상 작동! 🎉
-      </h1>
+    <div className="flex flex-col h-screen">
+      <Header />
+      <div className="flex flex-1">
+        <Sidebar />
+        <main className="flex-1 p-4 overflow-auto">
+          <AppRouter />
+        </main>
+      </div>
     </div>
   );
-}
+};
 
 export default App;
