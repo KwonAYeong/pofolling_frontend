@@ -1,6 +1,6 @@
 import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
-import AppRouter from './routes';
+import Signup from './routes/signup';
 
 const App = () => {
   return (
@@ -9,7 +9,7 @@ const App = () => {
       <div className="flex flex-1">
         <Sidebar />
         <main className="flex-1 p-4 overflow-auto">
-          <AppRouter />
+          <Signup />
         </main>
       </div>
     </div>
