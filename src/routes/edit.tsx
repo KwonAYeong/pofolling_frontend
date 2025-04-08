@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 
-import UploadPortfolio from '../pages/edit/portfolio/Upload';
-import PortfolioDetailMentor from '../pages/edit/portfolio/Detail';
+import UploadPortfolio from '../pages/mypage/myPortfolio/MyPortfolioCreate';
+import PortfolioDetailMentor from '../pages/edit/RequestDetail';
 import Request from '../pages/edit/Request';
 import RequestList from '../pages/edit/RequestList';
 import Chat from '../pages/chat/Chat';

@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 
-import RecruitList from '../pages/recruit/List';
-import RecruitDetail from '../pages/recruit/Detail';
-import Calendar from '../pages/recruit/Calendar';
+import RecruitList from '../pages/recruit/RecruitList';
+import RecruitDetail from '../pages/recruit/RecruitDetail';
+import Calendar from '../pages/recruit/RecruitCalendar';
 
 
 const Recruit = () => {
