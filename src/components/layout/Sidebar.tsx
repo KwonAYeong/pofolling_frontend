@@ -1,5 +1,4 @@
-// src/components/layout/Sidebar.tsx
-
+// 왼쪽 사이드바 
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 
