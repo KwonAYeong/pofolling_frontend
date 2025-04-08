@@ -1,11 +1,11 @@
 import { Routes, Route } from 'react-router-dom';
 
-import MyPage from '../pages/mypage/MyPage';
-import EditProfile from '../pages/mypage/EditProfile';
+import MyPage from '../pages/mypage/profile/MyPage';
+import EditProfile from '../pages/mypage/profile/ProfileUpdate';
 import Activity from '../pages/mypage/Activity';
-import MyPortfolio from '../pages/mypage/portfolio/MyPortfolio';
-import PortfolioDetailMentee from '../pages/mypage/portfolio/MyPofolDetail';
-import PortfolioEdit from '../pages/mypage/portfolio/MyPortfolioEdit';
+import MyPortfolio from '../pages/mypage/myPortfolio/MyPortfolioList';
+import PortfolioDetailMentee from '../pages/mypage/myPortfolio/MyPofolDetail';
+import PortfolioEdit from '../pages/mypage/myPortfolio/MyPortfolioUpdate';
 
 const Mypage = () => {
     return (
