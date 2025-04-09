@@ -2,7 +2,7 @@ import { Route } from 'react-router-dom';
 
 import MyPage from '../pages/mypage/profile/MyPage';
 import EditProfile from '../pages/mypage/profile/ProfileUpdate';
-import Activity from '../pages/mypage/Activity';
+import Activity from '../pages/mypage/MyActivity';
 import MyPortfolio from '../pages/mypage/myPortfolio/MyPortfolioList';
 import PortfolioDetailMentee from '../pages/mypage/myPortfolio/MyPofolDetail';
 import PortfolioEdit from '../pages/mypage/myPortfolio/MyPortfolioUpdate';
