@@ -2,13 +2,17 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { dummyUser } from '../../lib/dummyUser';
 import NotificationBell from './NotificationBell';
+import UserBadge from 'components/common/UserBadge';
 
 const Header = () => {
   const navigate = useNavigate();
   const isLoggedIn = !!dummyUser; //로그인 유무
-  const profileBorderColor =
-    dummyUser?.role === 'MENTOR' ? 'border-mentor' : 'border-mentee'; // 멘토 멘티 색
 
+    // 현재 가상 로그아웃 :: 실제 로그아웃 처리 로직으로 대체
+    const handleLogout = () => {
+      alert('로그아웃 처리 예정');
+      // 예: setUser(null); navigate('/login');
+    };
   return (
     <header className="flex items-center justify-between px-6 py-3 border-b bg-white">
       {/* 왼쪽 로고 */}
@@ -23,25 +27,32 @@ const Header = () => {
 
       {/* 오른쪽 - 로그인 상태/비로그인 상태 분기 */}
       <div className="flex items-center space-x-4">
-        {isLoggedIn ? (
+      {isLoggedIn && dummyUser ? (
           <>
             <NotificationBell />
             <button
               onClick={() => navigate('/mypage')}
-              className={`w-8 h-8 rounded-full overflow-hidden border-2 ${profileBorderColor}`}
+              className="flex items-center gap-2 group"
             >
-              <img
-                src="/profileEX.png" // 프로필 사진 일단 예시
-                alt="profile"
-                className="w-full h-full object-cover"
+              <UserBadge
+                role={dummyUser.role}
+                src="/profileEX.png"
+                className="w-8 h-8"
               />
+            </button>
+                {/* 로그아웃 버튼 */}
+                <button
+              onClick={handleLogout}
+              className="text-sm text-gray-600 hover:text-mentee"
+            >
+              로그아웃
             </button>
           </>
         ) : (
           <>
           {/*마우스 들어올 시 파란색으로 변경*/}
-            <Link to="/login" className="text-sm hover:text-blue-600">로그인</Link>
-            <Link to="/signup" className="text-sm hover:text-blue-600">회원가입</Link>
+            <Link to="/login" className="text-sm hover:text-mentee">로그인</Link>
+            <Link to="/signup" className="text-sm hover:text-mentee">회원가입</Link>
           </>
         )}
       </div>

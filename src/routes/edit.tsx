@@ -13,7 +13,8 @@ const EditRoutes = (
     <Route path="edit/portfolio/:id" element={<PortfolioDetailMentor />} />
     <Route path="edit/request" element={<Request />} />
     <Route path="edit/list" element={<RequestList />} />
-    <Route path="edit/chat/:id" element={<Chat />} />
+    {/* chat */}
+    <Route path="chat/:id" element={<Chat />} />
   </>
 );
 
