@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { dummyUser } from '../../lib/dummyUser';
 import { mypageSidebarMenu } from '../../utils/sidebarMenus';
+import ChatButton from 'components/common/ChatButton';
 
 const Layout = () => {
   const { pathname } = useLocation();
@@ -20,6 +21,7 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
+      <ChatButton/>
     </div>
   );
 };
