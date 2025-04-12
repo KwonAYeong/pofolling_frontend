@@ -7,6 +7,7 @@ import UserBadge from 'components/common/UserBadge';
 const Header = () => {
   const navigate = useNavigate();
   const isLoggedIn = !!dummyUser; //로그인 유무
+  const isMentee = dummyUser?.role === 'MENTEE';
 
     // 현재 가상 로그아웃 :: 실제 로그아웃 처리 로직으로 대체
     const handleLogout = () => {
@@ -20,7 +21,7 @@ const Header = () => {
 
       {/* 중앙 메뉴 마우스 들어올 시 파란색으로 변경*/}
       <nav className="space-x-6 text-sm font-medium">
-        <Link to="/edit/list" className="hover:text-blue-600">첨삭</Link>
+      {isMentee && <Link to="/edit/request" className="hover:text-blue-600">첨삭</Link>}
         <Link to="/community" className="hover:text-blue-600">커뮤니티</Link>
         <Link to="/recruit" className="hover:text-blue-600">채용정보</Link>
       </nav>
