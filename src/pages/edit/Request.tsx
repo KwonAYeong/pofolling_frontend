@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PortfolioSelector from 'components/edit/PortfolioSelector';
 import Button from 'components/common/Button';
-import { dummyUser } from 'lib/dummyUser';
+import { useUser } from 'context/UserContext';
 
 interface Portfolio {
   id: number;
@@ -12,23 +12,24 @@ interface Portfolio {
 
 const Request = () => {
   const navigate = useNavigate();
+  const {user} = useUser();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
 
   useEffect(() => {
-    if (!dummyUser || dummyUser.role !== 'MENTEE') {
+    if (!user || user.role !== 'MENTEE') {
       alert('멘티만 접근 가능한 페이지입니다.');
       navigate('/');
       return;
     }
   
-    const myPortfolios = dummyUser.portfolios || [];
+    const myPortfolios = user.portfolios || [];
     if (myPortfolios.length === 0) {
       navigate('/mypage/portfolio');
     } else {
       setPortfolios(myPortfolios);
     }
-  }, [navigate]); // ✅ 여기에 navigate 추가
+  }, [navigate,user]); // ✅ 여기에 navigate 추가
   
 
   const handleSelect = (id: number) => {

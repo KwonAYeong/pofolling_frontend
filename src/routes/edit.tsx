@@ -12,7 +12,7 @@ const EditRoutes = (
     <Route path="edit/portfolio/upload" element={<UploadPortfolio />} />
     <Route path="edit/portfolio/:id" element={<PortfolioDetailMentor />} />
     <Route path="edit/request" element={<Request />} />
-    <Route path="edit/list" element={<RequestList />} />
+    <Route path="edit/Requestlist" element={<RequestList />} />
     {/* chat */}
     <Route path="chat/:id" element={<Chat />} />
   </>
