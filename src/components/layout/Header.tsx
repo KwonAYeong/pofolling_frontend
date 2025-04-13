@@ -53,11 +53,11 @@ const Header = () => {
           <>
           {/*마우스 들어올 시 파란색으로 변경*/}
             <Link to="/login" className="text-sm hover:text-mentee">로그인</Link>
-            <Link to="/signup" className="text-sm hover:text-mentee">회원가입</Link>
+            <Link to="/register" className="text-sm hover:text-mentee">회원가입</Link>
           </>
         )}
       </div>
-    </header>
+    </header> 
   );
 };
 
