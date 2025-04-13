@@ -1,4 +1,6 @@
-import { UserRole } from 'lib/dummyUser';
+import { User } from 'context/UserContext';
+
+type UserRole = User['role']; // 'MENTOR' | 'MENTEE'
 
 interface UserBadgeProps {
   role: UserRole; // 멘토 멘티 역할에 따른 테두리 스타일

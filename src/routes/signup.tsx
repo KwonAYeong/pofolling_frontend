@@ -2,7 +2,7 @@ import { Route } from 'react-router-dom';
 
 import Main from '../pages/home/Main';
 import Login from '../pages/auth/Login';
-import Register from '../pages/auth/Register';
+import Register from '../pages/auth/Signup';
 import ResetPassword from '../pages/auth/ResetPassword';
 import VerifyMentor from '../pages/auth/VerifyMentor';
 

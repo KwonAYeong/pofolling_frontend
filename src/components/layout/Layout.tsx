@@ -2,15 +2,16 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { dummyUser } from '../../lib/dummyUser';
+import { useUser } from '../../context/UserContext';
 import { mypageSidebarMenu } from '../../utils/sidebarMenus';
 import ChatButton from 'components/common/ChatButton';
 
 const Layout = () => {
   const { pathname } = useLocation();
+  const { user } = useUser();
   const isMypage = pathname.startsWith('/mypage');
   const sidebarMenu =
-  isMypage && dummyUser ? mypageSidebarMenu(dummyUser.role) : [];
+  isMypage && user ? mypageSidebarMenu(user.role) : [];
 
   return (
     <div className="flex flex-col min-h-screen">

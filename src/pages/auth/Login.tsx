@@ -2,14 +2,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Input from '../../components/common/Input';
+import { useUser } from 'context/UserContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { setUser, dummyUsers } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
     if (email === 'test@example.com' && password === '1234') {
+      const matchedUser = dummyUsers.find(u => u.nickname === 'kay') || null;
+      setUser(matchedUser); // 👈 전역 상태에 유저 정보 저장
       navigate('/mypage');
     } else {
       alert('이메일 또는 비밀번호가 틀렸습니다.');
