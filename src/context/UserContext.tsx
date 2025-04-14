@@ -1,17 +1,14 @@
 // /src/context/UserContext.tsx
 import { createContext, useContext, useState } from 'react';
+import { Portfolio } from 'types/portfolio';
 
-export interface Portfolio {
-  id: number;
-  title: string;
-  uploadDate: string;
-}
 
 export interface User {
   user_id: number;
   nickname: string;
   role: 'MENTEE' | 'MENTOR';
-  portfolios: Portfolio[];
+  position: string; // 직군!
+  portfolios?: Portfolio[];
 }
 
 // 더미 유저
@@ -20,42 +17,54 @@ const dummyUsers: User[] = [
     user_id: 1,
     nickname: 'kay',
     role: 'MENTEE',
+    position: "IT" ,
     portfolios: [
-      { id: 1, title: '첫번째 포폴', uploadDate: '2025-04-01' },
-      { id: 2, title: '두번째 포폴', uploadDate: '2025-04-05' },
+      { id: 1,
+        title: '첫번째 포폴',
+        description: "첫번째로 만든 포폴입니다",
+        uploadDate: '2025-04-01', 
+        status:'REGISTERED'},
+      { id: 2,
+        title: '두번째 포폴',
+        description: "두번째로 만든 포폴입니다",
+        uploadDate: '2025-04-05' ,
+        status:'REGISTERED'},
     ],
   },
   {
     user_id: 2,
     nickname: 'khj',
     role: 'MENTEE',
+    position: "IT" ,
     portfolios: [
-      { id: 1, title: ' 포폴', uploadDate: '2025-03-22' },
-      { id: 2, title: '다음 포폴', uploadDate: '2025-04-11' },
+      { id: 1,
+        title: ' 포폴',
+        description: " 포폴입니다", 
+        uploadDate: '2025-03-22' ,
+        status:'REGISTERED'},
+      { id: 2, 
+        title: '다음 포폴',
+        description: "다음 포폴입니다",
+        uploadDate: '2025-04-11' ,
+        status:'REGISTERED'},
     ],
   },
   {
     user_id: 3,
     nickname: 'khm',
     role: 'MENTOR',
-    portfolios: [
-      { id: 1, title: '포폴1', uploadDate: '2025-03-20' },
-      { id: 2, title: '포폴2', uploadDate: '2025-04-22' },
-    ],
+    position: "IT" ,
   },
   {
     user_id: 4,
     nickname: 'sjy',
     role: 'MENTOR',
-    portfolios: [
-      { id: 1, title: '첫 포폴', uploadDate: '2025-03-27' },
-      { id: 2, title: '두번째 포폴', uploadDate: '2025-04-01' },
-    ],
+    position: "IT" ,
   },
 ];
 
 // kay 유저로 로그인했다고 가정(기본)
-const initialUser = dummyUsers.find(u => u.user_id === 1) || null;
+const initialUser = dummyUsers.find(u => u.user_id === 3) || null;
 
 const UserContext = createContext<{
   user: User | null;
@@ -78,3 +87,4 @@ export const useUser = () => {
   if (!context) throw new Error('useUser는 UserProvider 안에서 사용해야 합니다.');
   return context;
 };
+export type UserRole = 'MENTEE' | 'MENTOR';
