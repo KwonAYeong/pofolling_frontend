@@ -1,21 +1,22 @@
 // 로그인/로그아웃 상태 분기 + 멘토/멘티 테두리 색상
 import { Link, useNavigate } from 'react-router-dom';
-import { useUser } from '../../context/UserContext';
+import { useUser,UserRole } from '../../context/UserContext';
 import NotificationBell from './NotificationBell';
 import UserBadge from 'components/common/UserBadge';
 
 const Header = () => {
   const navigate = useNavigate();
   const { user,setUser } = useUser();
-  const isLoggedIn = !!useUser; //로그인 유무
+  const isLoggedIn = !!user; //로그인 유무
 
   const handleEditClick = () => {
-    if (!user) {
+    const role: UserRole | undefined = user?.role;
+    if (!role) {
       alert('로그인이 필요합니다.');
       navigate('/login');
-    } else if (user.role === 'MENTEE') {
+    } else if (role === 'MENTEE') {
       navigate('/edit/request');
-    } else if (user.role === 'MENTOR') {
+    } else if (role === 'MENTOR') {
       navigate('/edit/RequestList'); // 멘토용 페이지 경로
     }
   };
