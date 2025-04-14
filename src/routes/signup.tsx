@@ -2,7 +2,7 @@ import { Route } from 'react-router-dom';
 
 import Main from '../pages/home/Main';
 import Login from '../pages/auth/Login';
-import Register from '../pages/auth/Signup';
+import SignupMentor from '../pages/auth/signupmentor';
 import ResetPassword from '../pages/auth/ResetPassword';
 import VerifyMentor from '../pages/auth/VerifyMentor';
 
@@ -12,7 +12,7 @@ const SignupRoutes = (
     
     {/* Auth */}
     <Route path="login" element={<Login />} />
-    <Route path="register" element={<Register />} />
+    <Route path="/SignupMentor" element={<SignupMentor />} />
     <Route path="password/reset" element={<ResetPassword />} />
     <Route path="mentor/verify" element={<VerifyMentor />} />
   </>

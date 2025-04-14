@@ -5,7 +5,7 @@ const MainPage = () => {
   const navigate = useNavigate();
 
   const goToReview = () => {
-    navigate('/Mypage'); // 첨삭 페이지 경로
+    navigate('/edit/portfolio/upload'); // 첨삭 페이지 경로
   };
 
   return (
