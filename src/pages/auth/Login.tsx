@@ -60,7 +60,7 @@ export default function LoginPage() {
         <div className="mt-6 flex justify-between text-sm text-blue-500 font-medium">
           <button onClick={() => navigate('/Signupmentee')}
             className="px-6 py-2 bg-green-500 text-white rounded">멘티 가입하기</button>
-          <button onClick={() => navigate('/ResetPassword')}>비밀번호 찾기</button>
+          <button onClick={() => navigate('/password/verify')}>비밀번호 찾기</button>
           <button onClick={() => navigate('/SignupMentor')}
             className="px-6 py-2 bg-blue-500 text-white rounded">멘토 가입하기</button>
         </div>
