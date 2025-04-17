@@ -1,13 +1,14 @@
 
-export type PortfolioStatus = 'REGISTERED' | 'REQUESTED' | 'REVIEWING' | 'DONE';
 
 export interface Portfolio {
-  id: number;
+  portfolioId: number;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  fileUrl: string;
+  status: 'REGISTERED' | 'REQUESTED' | 'IN_PROGRESS' | 'COMPLETED';
   title: string;
-  description?: string;
-  uploadDate: string;
-  status: PortfolioStatus; // ✅ 상태 기반으로 분기 가능
-  fileUrl?: string; // 포폴 파일 경로 (선택)
+  userId: number;
 }
 
 // 사용 예시:

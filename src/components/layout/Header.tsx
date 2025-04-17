@@ -15,9 +15,9 @@ const Header = () => {
       alert('로그인이 필요합니다.');
       navigate('/login');
     } else if (role === 'MENTEE') {
-      navigate('/edit/request');
+      navigate('/edit-requests');
     } else if (role === 'MENTOR') {
-      navigate('/edit/RequestList'); // 멘토용 페이지 경로
+      navigate('/edit-response'); // 멘토용 페이지 경로
     }
   };
 
@@ -55,7 +55,7 @@ const Header = () => {
             >
               <UserBadge
                 role={user.role}
-                src="/profileEX.png"
+                profileUrl="/profileEX.png"
                 className="w-8 h-8"
               />
             </button>
