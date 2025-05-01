@@ -30,7 +30,10 @@ const Header = () => {
   return (
     <header className="flex items-center justify-between px-6 py-3 border-b bg-white">
       {/* 왼쪽 로고 */}
-      <Link to="/" className="text-xl font-bold">로고</Link>
+      <Link to="/" className="text-xl font-bold">
+      <img src="/logo2.png" alt="로고" className="h-8 mr-2" />
+      </Link>
+      
 
       {/* 중앙 메뉴 마우스 들어올 시 파란색으로 변경*/}
       <nav className="space-x-6 text-sm font-medium">
@@ -70,8 +73,7 @@ const Header = () => {
         ) : (
           <>
           {/*마우스 들어올 시 파란색으로 변경*/}
-            <Link to="/login" className="text-sm hover:text-mentee">로그인</Link>
-            <Link to="/register" className="text-sm hover:text-mentee">회원가입</Link>
+            <Link to="/login" className="text-sm hover:text-mentee">로그인/회원가입</Link>
           </>
         )}
       </div>
