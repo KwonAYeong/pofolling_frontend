@@ -1,123 +1,201 @@
-// pages/chat/Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Chat() {
-  const [chatList, setChatList] = useState([
-    {
-      id: 1,
-      name: '신재윤',
-      profileUrl: '/images/profile1.png',
-      messages: [
-        { sender: '신재윤', message: '안녕하세요!', time: '오후 1:58' },
-        { sender: '나', message: '안녕하세요!', time: '오후 1:58' },
-        { sender: '신재윤', message: '일단 바로 본론으로 갈까요?', time: '오후 2:07' },
-        { sender: '신재윤', message: '저는 전반적으로 다 괜찮았어요', time: '오후 2:07' },
-        { sender: '신재윤', message: '근데 포트폴리오 마지막 부분에 빼셔야 할게 있던데...', time: '오후 2:08' },
-      ],
-    },
-    {
-      id: 2,
-      name: '권아영',
-      profileUrl: '/images/profile2.png',
-      messages: [
-        { sender: '권아영', message: '이전 포폴이 더 나아요.', time: '오전 10:00' },
-        { sender: '나', message: '진짜요? 감사합니다!', time: '오전 10:01' },
-      ],
-    },
-  ]);
+  const userId = 1;
 
+  const [chatList, setChatList] = useState<any[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState('');
-  const selectedChat = chatList.find((chat) => chat.id === selectedChatId);
+  const [isEditingEnded, setIsEditingEnded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 메시지 보내기
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || selectedChatId === null) return;
+  const selectedChat = chatList.find((chat) => chat.id === selectedChatId);
 
-    updateChatWithMessage(newMessage);
-    setNewMessage('');
-  };
+  useEffect(() => {
+    const fetchChatList = async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/chat/list/${userId}`);
+        const data = await res.json();
 
-  // 파일 업로드 버튼 클릭
-  const handleFileUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+        const transformed = data.map((chat: any) => ({
+          id: chat.chatRoomId,
+          name: chat.senderNickname,
+          profileUrl: '/profileEX.png', // 🔥 모든 유저 동일 이미지
+          messages: [],
+          chatRoomId: chat.chatRoomId,
+          portfolioId: chat.portfolioId,
+          isActive: chat.isActive,
+          unreadCount: 0,
+          role: chat.senderRole || 'MENTEE',
+        }));
+
+        setChatList(transformed);
+      } catch (err) {
+        console.error('채팅방 목록 불러오기 실패', err);
+      }
+    };
+
+    fetchChatList();
+  }, []);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (selectedChatId === null) return;
+
+      const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
+      if (!chatRoom) return;
+
+      try {
+        const res = await fetch(`http://localhost:8080/chat/${chatRoom.chatRoomId}/messages`);
+        const data = await res.json();
+
+        const formatted = data.map((msg: any) => ({
+          sender: msg.senderId === userId ? '나' : chatRoom.name,
+          message: msg.message,
+          time: msg.sentAt?.slice(11, 16) || '',
+        }));
+
+        const updated = chatList.map((chat) =>
+          chat.id === selectedChatId
+            ? { ...chat, messages: formatted, unreadCount: 0 }
+            : chat
+        );
+
+        setChatList(updated);
+        setIsEditingEnded(!chatRoom.isActive);
+      } catch (err) {
+        console.error('메시지 불러오기 실패', err);
+      }
+    };
+
+    fetchMessages();
+  }, [selectedChatId]);
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || selectedChatId === null || isEditingEnded) return;
+    const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
+    if (!chatRoom) return;
+
+    try {
+      await fetch(`http://localhost:8080/chat/${chatRoom.chatRoomId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senderId: userId, message: newMessage }),
+      });
+
+      updateChatWithMessage(newMessage);
+      setNewMessage('');
+    } catch (err) {
+      console.error('메시지 전송 실패', err);
     }
   };
 
-  // 파일 선택했을 때
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && selectedChatId !== null) {
-      // 파일 이름을 메시지처럼 추가
-      const fileMessage = `[파일] ${file.name}`;
-      updateChatWithMessage(fileMessage);
-    }
-  };
-
-  // 채팅방 나가기
-  const handleLeaveChat = () => {
-    const confirmLeave = window.confirm('채팅방을 나가시겠습니까?');
-    if (confirmLeave && selectedChatId !== null) {
-      const updatedChatList = chatList.filter(chat => chat.id !== selectedChatId);
-      setChatList(updatedChatList);
-      setSelectedChatId(null);
-    }
-  };
-
-  // 공통 메시지 추가 함수 (텍스트/파일 둘 다)
   const updateChatWithMessage = (message: string) => {
-    let updatedChatList = chatList.map((chat) => {
+    let updated = chatList.map((chat) => {
       if (chat.id === selectedChatId) {
         return {
           ...chat,
-          messages: [
-            ...chat.messages,
-            { sender: '나', message, time: getCurrentTime() },
-          ],
+          messages: [...chat.messages, { sender: '나', message, time: getCurrentTime() }],
+        };
+      } else {
+        return {
+          ...chat,
+          messages: [...chat.messages, { sender: chat.name, message, time: getCurrentTime() }],
+          unreadCount: (chat.unreadCount || 0) + 1,
         };
       }
-      return chat;
     });
 
-    const movedChat = updatedChatList.find(chat => chat.id === selectedChatId);
-    updatedChatList = [
-      movedChat!,
-      ...updatedChatList.filter(chat => chat.id !== selectedChatId)
-    ];
-
-    setChatList(updatedChatList);
+    const moved = updated.find((chat) => chat.id === selectedChatId);
+    updated = [moved!, ...updated.filter((chat) => chat.id !== selectedChatId)];
+    setChatList(updated);
   };
 
-  // 현재 시간 포맷
+  const handleEndEdit = async () => {
+    if (selectedChatId === null) return;
+
+    const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
+    if (!chatRoom) return;
+
+    try {
+      await fetch(`http://localhost:8080/portfolio/${chatRoom.portfolioId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'COMPLETED' }),
+      });
+
+      await fetch(`http://localhost:8080/chat/${chatRoom.chatRoomId}/deactivate`, {
+        method: 'PATCH',
+      });
+
+      let updated = chatList.map((chat) =>
+        chat.id === selectedChatId
+          ? {
+              ...chat,
+              messages: [
+                ...chat.messages,
+                {
+                  sender: '시스템',
+                  message: '첨삭이 종료된 채팅방입니다.',
+                  time: getCurrentTime(),
+                },
+              ],
+              isActive: false,
+              unreadCount: 0,
+            }
+          : chat
+      );
+
+      const ended = updated.find((chat) => chat.id === selectedChatId);
+      updated = [...updated.filter((chat) => chat.id !== selectedChatId), ended!];
+      setChatList(updated);
+      setIsEditingEnded(true);
+    } catch (err) {
+      console.error('❌ 첨삭 종료 처리 실패:', err);
+    }
+  };
+
   const getCurrentTime = () => {
     const now = new Date();
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const ampm = hours >= 12 ? '오후' : '오전';
-    const formattedHour = hours % 12 || 12;
-    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-    return `${ampm} ${formattedHour}:${formattedMinutes}`;
+    const h = hours % 12 || 12;
+    const m = minutes < 10 ? `0${minutes}` : minutes;
+    return `${ampm} ${h}:${m}`;
   };
 
-  // 메시지 추가될 때마다 자동 스크롤
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  const handleFileUploadClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && selectedChatId !== null && !isEditingEnded) {
+      updateChatWithMessage(`[파일] ${file.name}`);
     }
+  };
+
+  const handleLeaveChat = () => {
+    if (window.confirm('채팅방을 나가시겠습니까?') && selectedChatId !== null) {
+      setSelectedChatId(null);
+      setIsEditingEnded(false);
+    }
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatList, selectedChatId]);
 
   return (
     <div className="flex h-screen">
-      {/* 왼쪽 채팅 목록 */}
+      {/* 채팅방 목록 */}
       <div className="w-[300px] border-r bg-white overflow-y-auto">
         <ul>
           {chatList.map((chat) => {
-            const latestMessage = chat.messages.length > 0
-              ? chat.messages[chat.messages.length - 1]
-              : null;
+            const latest = chat.messages.length > 0 ? chat.messages.at(-1) : null;
+            const isUnread = chat.unreadCount > 0;
+            const borderColor =
+              chat.role === 'MENTOR' ? 'border-[#657CFF]' : 'border-[#A566FF]';
 
             return (
               <li
@@ -129,20 +207,26 @@ export default function Chat() {
               >
                 <img
                   src={chat.profileUrl}
-                  alt={`${chat.name} 프로필`}
-                  className="w-12 h-12 rounded-full"
+                  alt={chat.name}
+                  className={`w-12 h-12 rounded-full border-4 ${borderColor}`}
                 />
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold">{chat.name}</span>
-                    {latestMessage && (
-                      <span className="text-xs text-gray-400 whitespace-nowrap">
-                        {latestMessage.time}
+                    <span className="font-semibold">
+                      {chat.name} (포트폴리오 {chat.portfolioId}번)
+                    </span>
+                    {isUnread && (
+                      <span className="ml-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        {chat.unreadCount}
                       </span>
                     )}
                   </div>
                   <p className="text-sm text-gray-600 truncate">
-                    {latestMessage ? latestMessage.message : ''}
+                    {latest?.message === '첨삭이 종료된 채팅방입니다.'
+                      ? '첨삭이 종료된 채팅방입니다.'
+                      : isUnread
+                      ? '메시지가 도착했습니다'
+                      : latest?.message || ''}
                   </p>
                 </div>
               </li>
@@ -151,27 +235,44 @@ export default function Chat() {
         </ul>
       </div>
 
-      {/* 오른쪽 채팅창 */}
+      {/* 채팅창 */}
       <div className="flex flex-col flex-1 bg-white">
         {selectedChat ? (
           <>
-            {/* 채팅방 상단 */}
             <div className="flex items-center justify-between p-4 border-b bg-gray-100">
               <div className="flex items-center gap-2">
-                <img src={selectedChat.profileUrl} alt="상대방" className="w-10 h-10 rounded-full" />
-                <span className="text-lg font-semibold">{selectedChat.name}</span>
+                <img
+                  src={selectedChat.profileUrl}
+                  alt=""
+                  className={`w-10 h-10 rounded-full border-4 ${
+                    selectedChat.role === 'MENTOR'
+                      ? 'border-[#657CFF]'
+                      : 'border-[#A566FF]'
+                  }`}
+                />
+                <span className="text-lg font-semibold">
+                  {selectedChat.name} (포트폴리오 {selectedChat.portfolioId}번)
+                </span>
               </div>
-              <button
-                onClick={handleLeaveChat}
-                className="w-10 h-10 flex items-center justify-center bg-gray-300 rounded"
-              >
-                ➡️
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleEndEdit}
+                  className="px-3 py-1 border border-gray-400 rounded text-sm text-gray-800 hover:bg-gray-100"
+                  disabled={isEditingEnded}
+                >
+                  첨삭 종료
+                </button>
+                <button
+                  onClick={handleLeaveChat}
+                  className="px-3 py-1 border border-gray-400 rounded text-sm text-gray-800 hover:bg-gray-100"
+                >
+                  채팅방 나가기
+                </button>
+              </div>
             </div>
 
-            {/* 채팅 메시지 목록 */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
-              {selectedChat.messages.map((msg, index) => (
+              {selectedChat.messages.map((msg: any, index: number) => (
                 <div key={index} className="flex flex-col text-sm">
                   <span className="font-semibold">{msg.sender}</span>
                   <span>{msg.message}</span>
@@ -181,26 +282,20 @@ export default function Chat() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* 채팅 입력창 */}
             <div className="flex items-center border-t p-2">
-              {/* ＋ 버튼 */}
               <button
-                type="button"
                 onClick={handleFileUploadClick}
-                className="w-8 h-8 flex items-center justify-center text-xl text-gray-500"
+                className="w-8 h-8 text-xl text-gray-500"
+                disabled={isEditingEnded}
               >
                 ＋
               </button>
-
-              {/* 숨겨진 파일 업로드 input */}
               <input
                 type="file"
                 ref={fileInputRef}
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
-
-              {/* 메시지 입력창 */}
               <input
                 type="text"
                 className="flex-1 mx-2 border-none focus:ring-0 text-sm"
@@ -208,12 +303,12 @@ export default function Chat() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                disabled={isEditingEnded}
               />
-
-              {/* 전송 버튼 */}
               <button
                 onClick={handleSendMessage}
                 className="px-4 py-2 bg-gray-200 text-sm rounded"
+                disabled={isEditingEnded}
               >
                 전송
               </button>
