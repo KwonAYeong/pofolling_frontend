@@ -6,9 +6,9 @@ export type UserRole = 'MENTEE' | 'MENTOR';
 
 export interface User {
   user_id: number;
-  nickname: string;
+  nickname?: string;
   role: UserRole;
-  job_id: string;
+  job_id?: string;
   portfolios?: Portfolio[];
 }
 
@@ -22,75 +22,32 @@ interface UserContextType {
   dummyUsers: User[];
 }
 
+
 // 개발용 더미 유저 (현재 로그인은 여기서 선택)
 const dummyUsers: User[] = [
   {
     user_id: 1,
-    nickname: 'kay',
     role: 'MENTEE',
-    job_id: 'IT',
-    portfolios: [
-      {
-        portfolioId: 1,
-        title: '첫번째 포폴',
-        content: '첫번째로 만든 포폴입니다',
-        createdAt: '2025-04-01',
-        updatedAt: '2025-04-01',
-        fileUrl: '/files/portfolio1.pdf',
-        status: 'REGISTERED',
-        userId: 1,
-      },
-      {
-        portfolioId: 2,
-        title: '두번째 포폴',
-        content: '두번째로 만든 포폴입니다',
-        createdAt: '2025-04-05',
-        updatedAt: '2025-04-05',
-        fileUrl: '/files/portfolio2.pdf',
-        status: 'REGISTERED',
-        userId: 1,
-      },
-    ],
   },
   {
     user_id: 2,
-    nickname: 'khj',
     role: 'MENTEE',
-    job_id: 'IT',
-    portfolios: [
-      {
-        portfolioId: 1,
-        title: '포폴',
-        content: '포폴입니다',
-        createdAt: '2025-03-22',
-        updatedAt: '2025-03-22',
-        fileUrl: '/files/portfolio3.pdf',
-        status: 'REGISTERED',
-        userId: 2,
-      },
-      {
-        portfolioId: 2,
-        title: '다음 포폴',
-        content: '다음 포폴입니다',
-        createdAt: '2025-04-11',
-        updatedAt: '2025-04-11',
-        fileUrl: '/files/portfolio4.pdf',
-        status: 'REGISTERED',
-        userId: 2,
-      },
-    ],
   },
   {
     user_id: 3,
-    nickname: 'khm',
-    role: 'MENTOR',
-    job_id: 'IT',
+    role: 'MENTEE',
   },
   {
     user_id: 4,
-    nickname: 'sjy',
     role: 'MENTOR',
-    job_id: 'IT',
+  },
+  {
+    user_id: 5,
+    role: 'MENTOR',
+  },
+  {
+    user_id: 6,
+    role: 'MENTOR',
   },
 ];
 
