@@ -52,7 +52,7 @@ const dummyUsers: User[] = [
 ];
 
 // 현재 로그인 유저는 기본적으로 user_id === 1   (kay)
-const initialUser = dummyUsers.find(user => user.user_id === 1) ?? dummyUsers[0];
+const initialUser = dummyUsers.find(user => user.user_id === 3) || dummyUsers[0];
 
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
