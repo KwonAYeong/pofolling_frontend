@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useUser } from 'context/UserContext';
+import UserBadge from '../../components/common/UserBadge';
 
 interface ChatItem {
   id: number;
@@ -9,7 +10,7 @@ interface ChatItem {
   messages: any[];
   chatRoomId: number;
   portfolioIds: number[];
-  role: string;
+  role: 'MENTOR' | 'MENTEE';
   isActive: boolean;
   lastMessage: string;
   hasNewMessage: boolean;
@@ -19,12 +20,12 @@ export default function Chat() {
   const { user } = useUser();
   const [chatList, setChatList] = useState<ChatItem[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
+  const [selectedChat, setSelectedChat] = useState<ChatItem | null>(null);
   const [newMessage, setNewMessage] = useState('');
-  const [isActive, setIsActive] = useState(true);
+  const [isEditActive, setIsEditActive] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const selectedChat = chatList.find((chat) => chat.id === selectedChatId);
 
   useEffect(() => {
     if (!user?.user_id) return;
@@ -36,6 +37,8 @@ export default function Chat() {
 
         const transformed: ChatItem[] = data.map((chat: any) => {
           const isSender = chat.senderId === user.user_id;
+          const role: 'MENTOR' | 'MENTEE' = user.role === 'MENTEE' ? 'MENTOR' : 'MENTEE';
+
           return {
             id: chat.chatRoomId,
             name: isSender ? chat.receiverNickname : chat.senderNickname,
@@ -45,11 +48,9 @@ export default function Chat() {
             messages: [],
             chatRoomId: chat.chatRoomId,
             portfolioIds: chat.portfolioIds || [],
-            role: isSender ? chat.receiverRole : chat.senderRole,
+            role,
             isActive: chat.isActive,
-            lastMessage: chat.isActive
-              ? chat.lastMessage || ''
-              : '첨삭이 종료된 채팅방입니다.',
+            lastMessage: chat.isActive ? chat.lastMessage || '' : '첨삭이 종료된 채팅방입니다.',
             hasNewMessage: chat.hasNewMessage || false,
           };
         });
@@ -69,8 +70,14 @@ export default function Chat() {
   }, [user]);
 
   useEffect(() => {
+    const chat = chatList.find((c) => c.id === selectedChatId) || null;
+    setSelectedChat(chat);
+    setIsEditActive(chat?.isActive ?? true);
+  }, [selectedChatId, chatList]);
+
+  useEffect(() => {
     const fetchMessages = async () => {
-      if (selectedChatId === null) return;
+      if (!selectedChatId) return;
       const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
       if (!chatRoom) return;
 
@@ -86,22 +93,12 @@ export default function Chat() {
         }));
 
         if (!chatRoom.isActive && !formatted.some((m: any) => m.message === '첨삭이 종료되었습니다')) {
-          formatted.push({
-            sender: '시스템',
-            message: '첨삭이 종료되었습니다',
-            time: '',
-            profile: null,
-          });
+          formatted.push({ sender: '시스템', message: '첨삭이 종료되었습니다', time: '', profile: null });
         }
 
         const updated = chatList.map((chat) =>
           chat.id === selectedChatId
-            ? {
-                ...chat,
-                messages: formatted,
-                hasNewMessage: false,
-                lastMessage: formatted.at(-1)?.message || '',
-              }
+            ? { ...chat, messages: formatted, hasNewMessage: false, lastMessage: formatted.at(-1)?.message || '' }
             : chat
         );
 
@@ -113,13 +110,6 @@ export default function Chat() {
 
     fetchMessages();
   }, [selectedChatId]);
-
-  useEffect(() => {
-    const chat = chatList.find(c => c.id === selectedChatId);
-    if (chat) {
-      setIsActive(chat.isActive);
-    }
-  }, [selectedChatId, chatList]);
 
   const updateChatWithMessage = (message: string) => {
     const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
@@ -147,7 +137,7 @@ export default function Chat() {
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || selectedChatId === null || !isActive) return;
+    if (!newMessage.trim() || selectedChatId === null || !isEditActive) return;
     const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
     if (!chatRoom) return;
 
@@ -156,7 +146,6 @@ export default function Chat() {
         senderId: user?.user_id,
         message: newMessage,
       });
-
       updateChatWithMessage(newMessage);
       setNewMessage('');
     } catch (err) {
@@ -170,32 +159,38 @@ export default function Chat() {
     if (!chatRoom) return;
 
     try {
-      await axios.patch(`http://localhost:8080/chat/${chatRoom.chatRoomId}/deactivate`);
-      await axios.post(`http://localhost:8080/chat/${chatRoom.chatRoomId}/messages`, {
-        senderId: user?.user_id,
-        message: '첨삭이 종료되었습니다',
-      });
+      const res = await axios.patch(`http://localhost:8080/chat/${chatRoom.chatRoomId}/deactivate`);
+      const updatedRoom = res.data;
 
-      const systemMessage = {
-        sender: '시스템',
-        message: '첨삭이 종료되었습니다',
-        time: '',
-        profile: null,
-      };
+      const systemMessage = { sender: '시스템', message: '첨삭이 종료되었습니다', time: '', profile: null };
 
-      const updated = chatList.map((chat) =>
-        chat.id === selectedChatId
-          ? {
-              ...chat,
-              isActive: false,
-              messages: [...chat.messages, systemMessage],
-              lastMessage: chat.lastMessage || '',
-            }
-          : chat
+      setChatList(prevList =>
+        prevList.map(chat =>
+          chat.id === updatedRoom.chatRoomId
+            ? {
+                ...chat,
+                isActive: updatedRoom.isActive,
+                lastMessage: updatedRoom.lastMessage || '첨삭이 종료되었습니다',
+                messages: [...chat.messages, systemMessage],
+                hasNewMessage: updatedRoom.hasNewMessage,
+              }
+            : chat
+        )
       );
 
-      setChatList(updated);
-      setIsActive(false);
+      setSelectedChat(prev =>
+        prev
+          ? {
+              ...prev,
+              isActive: updatedRoom.isActive,
+              lastMessage: updatedRoom.lastMessage || '첨삭이 종료되었습니다',
+              messages: [...prev.messages, systemMessage],
+            }
+          : prev
+      );
+
+      setIsEditActive(false);
+      setNewMessage('');
     } catch (err) {
       console.error('첨삭 종료 실패', err);
     }
@@ -221,11 +216,8 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatList, selectedChatId]);
 
-  const getBorderColor = (role: string) =>
-    role?.toUpperCase() === 'MENTOR' ? 'border-[#A566FF]' : 'border-[#657CFF]';
-
-  const formatPortfolioIds = (ids: number[]) =>
-    ids.length ? `(${ids.join(', ')}번)` : '(포트폴리오 없음)';
+  const formatPortfolioIds = (ids?: number[]) =>
+    ids && ids.length ? `포트폴리오 ${ids.join(', ')}번` : '포트폴리오 없음';
 
   return (
     <div className="flex h-screen">
@@ -239,38 +231,33 @@ export default function Chat() {
                 selectedChatId === chat.id ? 'bg-gray-100' : ''
               }`}
             >
-              <img
-                src={chat.profileUrl}
-                alt={chat.name}
-                className={`w-12 h-12 rounded-full border-4 ${getBorderColor(chat.role)}`}
-              />
+              <UserBadge role={chat.role} profileUrl={chat.profileUrl} className="w-12 h-12" />
               <div className="flex-1">
                 <div className="font-semibold flex items-center gap-1">
-                  {chat.name} {formatPortfolioIds(chat.portfolioIds)}
+                  {chat.name} ({formatPortfolioIds(chat.portfolioIds)})
                 </div>
                 <p
-  className={`text-sm truncate ${
-    chat.hasNewMessage &&
-    selectedChatId !== chat.id &&
-    chat.lastMessage !== '첨삭이 종료된 채팅방입니다.'
-      ? 'font-semibold'
-      : 'text-gray-600'
-  }`}
-  style={
-    chat.hasNewMessage &&
-    selectedChatId !== chat.id &&
-    chat.lastMessage !== '첨삭이 종료된 채팅방입니다.'
-      ? { color: '#FF9090' }
-      : undefined
-  }
->
-  {chat.hasNewMessage &&
-  selectedChatId !== chat.id &&
-  chat.lastMessage !== '첨삭이 종료된 채팅방입니다.'
-    ? '새 메시지가 도착하였습니다.'
-    : chat.lastMessage}
-</p>
-
+                  className={`text-sm truncate ${
+                    chat.hasNewMessage &&
+                    selectedChatId !== chat.id &&
+                    chat.lastMessage !== '첨삭이 종료된 채팅방입니다.'
+                      ? 'font-semibold'
+                      : 'text-gray-600'
+                  }`}
+                  style={
+                    chat.hasNewMessage &&
+                    selectedChatId !== chat.id &&
+                    chat.lastMessage !== '첨삭이 종료된 채팅방입니다.'
+                      ? { color: '#FF9090' }
+                      : undefined
+                  }
+                >
+                  {chat.hasNewMessage &&
+                  selectedChatId !== chat.id &&
+                  chat.lastMessage !== '첨삭이 종료된 채팅방입니다.'
+                    ? '새 메시지가 도착하였습니다.'
+                    : chat.lastMessage}
+                </p>
               </div>
             </li>
           ))}
@@ -283,20 +270,14 @@ export default function Chat() {
             <div className="flex items-center justify-between p-4 border-b bg-gray-100">
               <div className="flex items-center gap-2">
                 <button onClick={handleBack} className="text-2xl">←</button>
-                <img
-                  src={selectedChat.profileUrl}
-                  alt=""
-                  className={`w-10 h-10 rounded-full border-4 ${getBorderColor(selectedChat.role)}`}
-                />
-                <div className="font-semibold">
-                  {selectedChat.name} {formatPortfolioIds(selectedChat.portfolioIds)}
+                <UserBadge role={selectedChat.role} profileUrl={selectedChat.profileUrl} className="w-10 h-10" />
+                <div className="flex flex-col">
+                  <span className="font-semibold text-sm">{selectedChat.name}</span>
+                  <span className="text-xs text-gray-500">{formatPortfolioIds(selectedChat.portfolioIds)}</span>
                 </div>
               </div>
-              {isActive && (
-                <button
-                  onClick={handleEndEdit}
-                  className="px-3 py-1 border border-gray-400 rounded text-sm text-gray-800 hover:bg-gray-100"
-                >
+              {isEditActive && (
+                <button onClick={handleEndEdit} className="px-3 py-1 border border-gray-400 rounded text-sm text-gray-800 hover:bg-gray-100">
                   첨삭 종료
                 </button>
               )}
@@ -314,12 +295,7 @@ export default function Chat() {
                     {msg.message}
                   </div>
                 ) : (
-                  <div
-                    key={idx}
-                    className={`flex flex-col text-sm ${
-                      msg.sender === '나' ? 'items-end text-right' : 'items-start text-left'
-                    }`}
-                  >
+                  <div key={idx} className={`flex flex-col text-sm ${msg.sender === '나' ? 'items-end text-right' : 'items-start text-left'}`}>
                     {msg.sender !== '나' && (
                       <div className="flex items-center gap-2">
                         <img src={msg.profile || '/profileEX.png'} alt="" className="w-6 h-6 rounded-full" />
@@ -336,12 +312,7 @@ export default function Chat() {
 
             <div className="flex items-center border-t p-2">
               <button onClick={handleFileUploadClick} className="w-8 h-8 text-xl text-gray-500">＋</button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-              />
+              <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
               <input
                 type="text"
                 className="flex-1 mx-2 border-none focus:ring-0 text-sm"
@@ -349,12 +320,12 @@ export default function Chat() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                disabled={!isActive}
+                disabled={!isEditActive}
               />
               <button
                 onClick={handleSendMessage}
                 className="px-4 py-2 bg-gray-200 text-sm rounded"
-                disabled={!isActive}
+                disabled={!isEditActive}
               >
                 전송
               </button>
