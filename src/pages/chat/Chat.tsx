@@ -1,11 +1,23 @@
-// Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useUser } from 'context/UserContext';
 
+interface ChatItem {
+  id: number;
+  name: string;
+  profileUrl: string;
+  messages: any[];
+  chatRoomId: number;
+  portfolioIds: number[];
+  role: string;
+  isActive: boolean;
+  lastMessage: string;
+  hasNewMessage: boolean;
+}
+
 export default function Chat() {
   const { user } = useUser();
-  const [chatList, setChatList] = useState<any[]>([]);
+  const [chatList, setChatList] = useState<ChatItem[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -22,7 +34,7 @@ export default function Chat() {
         const res = await axios.get(`http://localhost:8080/chat/list/${user.user_id}`);
         const data = res.data;
 
-        const transformed = data.map((chat: any) => {
+        const transformed: ChatItem[] = data.map((chat: any) => {
           const isSender = chat.senderId === user.user_id;
           return {
             id: chat.chatRoomId,
@@ -32,14 +44,22 @@ export default function Chat() {
               : chat.senderProfileImage || '/profileEX.png',
             messages: [],
             chatRoomId: chat.chatRoomId,
-            portfolioId: chat.portfolioId,
+            portfolioIds: chat.portfolioIds || [],
             role: isSender ? chat.receiverRole : chat.senderRole,
-            unreadCount: 0,
             isActive: chat.isActive,
+            lastMessage: chat.isActive
+              ? chat.lastMessage || ''
+              : '첨삭이 종료된 채팅방입니다.',
+            hasNewMessage: chat.hasNewMessage || false,
           };
         });
 
-        setChatList(transformed);
+        const sorted = [
+          ...transformed.filter((c) => c.isActive),
+          ...transformed.filter((c) => !c.isActive),
+        ];
+
+        setChatList(sorted);
       } catch (err) {
         console.error('채팅방 목록 불러오기 실패', err);
       }
@@ -56,21 +76,36 @@ export default function Chat() {
 
       try {
         const res = await axios.get(`http://localhost:8080/chat/${chatRoom.chatRoomId}/messages`);
-        const data = res.data;
+        const { messages } = res.data;
 
-        const formatted = data.map((msg: any) => ({
-          sender: msg.senderId === user?.user_id ? '나' : chatRoom.name,
+        const formatted = messages.map((msg: any) => ({
+          sender: msg.senderId === user?.user_id ? '나' : msg.senderNickname ?? '시스템',
           message: msg.message,
           time: msg.sentAt?.slice(11, 16) || '',
-          profile: msg.senderId === user?.user_id ? null : chatRoom.profileUrl,
+          profile: msg.senderId === user?.user_id ? null : msg.senderProfileImage,
         }));
 
+        if (!chatRoom.isActive && !formatted.some((m: any) => m.message === '첨삭이 종료되었습니다')) {
+          formatted.push({
+            sender: '시스템',
+            message: '첨삭이 종료되었습니다',
+            time: '',
+            profile: null,
+          });
+        }
+
         const updated = chatList.map((chat) =>
-          chat.id === selectedChatId ? { ...chat, messages: formatted, unreadCount: 0 } : chat
+          chat.id === selectedChatId
+            ? {
+                ...chat,
+                messages: formatted,
+                hasNewMessage: false,
+                lastMessage: formatted.at(-1)?.message || '',
+              }
+            : chat
         );
 
         setChatList(updated);
-        setIsActive(chatRoom.isActive);
       } catch (err) {
         console.error('메시지 불러오기 실패', err);
       }
@@ -78,6 +113,38 @@ export default function Chat() {
 
     fetchMessages();
   }, [selectedChatId]);
+
+  useEffect(() => {
+    const chat = chatList.find(c => c.id === selectedChatId);
+    if (chat) {
+      setIsActive(chat.isActive);
+    }
+  }, [selectedChatId, chatList]);
+
+  const updateChatWithMessage = (message: string) => {
+    const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
+    if (!chatRoom) return;
+
+    const updated = chatList.map((chat) => {
+      if (chat.id === selectedChatId) {
+        return {
+          ...chat,
+          messages: [...chat.messages, { sender: '나', message, time: getCurrentTime() }],
+          lastMessage: message,
+        };
+      } else {
+        return chat;
+      }
+    });
+
+    const moved = updated.find((chat) => chat.id === selectedChatId);
+    const sorted = [
+      ...updated.filter((c) => c.isActive && c.id !== selectedChatId),
+      moved!,
+      ...updated.filter((c) => !c.isActive),
+    ];
+    setChatList(sorted);
+  };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || selectedChatId === null || !isActive) return;
@@ -97,22 +164,6 @@ export default function Chat() {
     }
   };
 
-  const updateChatWithMessage = (message: string) => {
-    const updated = chatList.map((chat) => {
-      if (chat.id === selectedChatId) {
-        return {
-          ...chat,
-          messages: [...chat.messages, { sender: '나', message, time: getCurrentTime() }],
-        };
-      } else {
-        return chat;
-      }
-    });
-
-    const moved = updated.find((chat) => chat.id === selectedChatId);
-    setChatList([moved!, ...updated.filter((chat) => chat.id !== selectedChatId)]);
-  };
-
   const handleEndEdit = async () => {
     if (selectedChatId === null) return;
     const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
@@ -120,20 +171,25 @@ export default function Chat() {
 
     try {
       await axios.patch(`http://localhost:8080/chat/${chatRoom.chatRoomId}/deactivate`);
+      await axios.post(`http://localhost:8080/chat/${chatRoom.chatRoomId}/messages`, {
+        senderId: user?.user_id,
+        message: '첨삭이 종료되었습니다',
+      });
+
+      const systemMessage = {
+        sender: '시스템',
+        message: '첨삭이 종료되었습니다',
+        time: '',
+        profile: null,
+      };
 
       const updated = chatList.map((chat) =>
         chat.id === selectedChatId
           ? {
               ...chat,
-              messages: [
-                ...chat.messages,
-                {
-                  sender: '시스템',
-                  message: '첨삭이 종료된 채팅방입니다.',
-                  time: getCurrentTime(),
-                },
-              ],
               isActive: false,
+              messages: [...chat.messages, systemMessage],
+              lastMessage: chat.lastMessage || '',
             }
           : chat
       );
@@ -141,7 +197,7 @@ export default function Chat() {
       setChatList(updated);
       setIsActive(false);
     } catch (err) {
-      console.error('첨삭 종료 실패:', err);
+      console.error('첨삭 종료 실패', err);
     }
   };
 
@@ -151,56 +207,73 @@ export default function Chat() {
   };
 
   const handleFileUploadClick = () => fileInputRef.current?.click();
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && selectedChatId !== null) {
       updateChatWithMessage(`[파일] ${file.name}`);
     }
   };
+
   const handleBack = () => setSelectedChatId(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatList, selectedChatId]);
 
-  const getBorderColor = (role: string) => role?.toUpperCase() === 'MENTOR' ? 'border-[#A566FF]' : 'border-[#657CFF]';
+  const getBorderColor = (role: string) =>
+    role?.toUpperCase() === 'MENTOR' ? 'border-[#A566FF]' : 'border-[#657CFF]';
+
+  const formatPortfolioIds = (ids: number[]) =>
+    ids.length ? `(${ids.join(', ')}번)` : '(포트폴리오 없음)';
 
   return (
     <div className="flex h-screen">
       <div className="w-[300px] border-r bg-white overflow-y-auto">
         <ul>
-          {chatList.map((chat) => {
-            const latest = chat.messages.at(-1);
-            const isUnread = chat.unreadCount > 0;
-            return (
-              <li
-                key={chat.id}
-                onClick={() => setSelectedChatId(chat.id)}
-                className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-gray-100 ${selectedChatId === chat.id ? 'bg-gray-100' : ''}`}
-              >
-                <img
-                  src={chat.profileUrl}
-                  alt={chat.name}
-                  className={`w-12 h-12 rounded-full border-4 ${getBorderColor(chat.role)}`}
-                />
-                <div className="flex-1">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">
-                      {chat.name} (포트폴리오 {chat.portfolioId}번)
-                    </span>
-                    {isUnread && (
-                      <span className="ml-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                        {chat.unreadCount}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 truncate">
-                    {latest?.message === '첨삭이 종료된 채팅방입니다.' ? '첨삭이 종료된 채팅방입니다.' : isUnread ? '메시지가 도착했습니다' : latest?.message || ''}
-                  </p>
+          {chatList.map((chat) => (
+            <li
+              key={chat.id}
+              onClick={() => setSelectedChatId(chat.id)}
+              className={`flex items-start gap-3 p-4 cursor-pointer hover:bg-gray-100 ${
+                selectedChatId === chat.id ? 'bg-gray-100' : ''
+              }`}
+            >
+              <img
+                src={chat.profileUrl}
+                alt={chat.name}
+                className={`w-12 h-12 rounded-full border-4 ${getBorderColor(chat.role)}`}
+              />
+              <div className="flex-1">
+                <div className="font-semibold flex items-center gap-1">
+                  {chat.name} {formatPortfolioIds(chat.portfolioIds)}
                 </div>
-              </li>
-            );
-          })}
+                <p
+  className={`text-sm truncate ${
+    chat.hasNewMessage &&
+    selectedChatId !== chat.id &&
+    chat.lastMessage !== '첨삭이 종료된 채팅방입니다.'
+      ? 'font-semibold'
+      : 'text-gray-600'
+  }`}
+  style={
+    chat.hasNewMessage &&
+    selectedChatId !== chat.id &&
+    chat.lastMessage !== '첨삭이 종료된 채팅방입니다.'
+      ? { color: '#FF9090' }
+      : undefined
+  }
+>
+  {chat.hasNewMessage &&
+  selectedChatId !== chat.id &&
+  chat.lastMessage !== '첨삭이 종료된 채팅방입니다.'
+    ? '새 메시지가 도착하였습니다.'
+    : chat.lastMessage}
+</p>
+
+              </div>
+            </li>
+          ))}
         </ul>
       </div>
 
@@ -215,16 +288,18 @@ export default function Chat() {
                   alt=""
                   className={`w-10 h-10 rounded-full border-4 ${getBorderColor(selectedChat.role)}`}
                 />
-                <span className="text-lg font-semibold">
-                  {selectedChat.name} (포트폴리오 {selectedChat.portfolioId}번)
-                </span>
+                <div className="font-semibold">
+                  {selectedChat.name} {formatPortfolioIds(selectedChat.portfolioIds)}
+                </div>
               </div>
-              <button
-                onClick={handleEndEdit}
-                className="px-3 py-1 border border-gray-400 rounded text-sm text-gray-800 hover:bg-gray-100"
-              >
-                첨삭 종료
-              </button>
+              {isActive && (
+                <button
+                  onClick={handleEndEdit}
+                  className="px-3 py-1 border border-gray-400 rounded text-sm text-gray-800 hover:bg-gray-100"
+                >
+                  첨삭 종료
+                </button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -241,11 +316,13 @@ export default function Chat() {
                 ) : (
                   <div
                     key={idx}
-                    className={`flex flex-col text-sm ${msg.sender === '나' ? 'items-end text-right' : 'items-start text-left'}`}
+                    className={`flex flex-col text-sm ${
+                      msg.sender === '나' ? 'items-end text-right' : 'items-start text-left'
+                    }`}
                   >
                     {msg.sender !== '나' && (
                       <div className="flex items-center gap-2">
-                        <img src={selectedChat.profileUrl} alt="" className="w-6 h-6 rounded-full" />
+                        <img src={msg.profile || '/profileEX.png'} alt="" className="w-6 h-6 rounded-full" />
                         <span className="font-semibold">{msg.sender}</span>
                       </div>
                     )}
@@ -258,9 +335,7 @@ export default function Chat() {
             </div>
 
             <div className="flex items-center border-t p-2">
-              <button onClick={handleFileUploadClick} className="w-8 h-8 text-xl text-gray-500">
-                ＋
-              </button>
+              <button onClick={handleFileUploadClick} className="w-8 h-8 text-xl text-gray-500">＋</button>
               <input
                 type="file"
                 ref={fileInputRef}

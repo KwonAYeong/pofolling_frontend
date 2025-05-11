@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UserBadge from 'components/common/UserBadge';
 import Button from 'components/common/Button';
+import CareerViewItem from 'components/mypage/myProfile/CareerViewItem';
+import EducationViewItem from 'components/mypage/myProfile/EducationViewItem';
 
 interface User {
-  nickname: string;
+  nickname: string; // 닉네임
   role: 'MENTEE' | 'MENTOR';
   profileUrl?: string;
   email?: string;
   job?: string;
-  description?: string;
   experience?: { company: string; role: string }[];
   education?: { school: string; major: string }[];
 }
@@ -20,35 +21,33 @@ const MyProfile = () => {
 
   useEffect(() => {
     const dummyUser: User = {
-      nickname: '홍길동',
+      nickname: '부실감자',
       role: 'MENTEE',
-      profileUrl: '',
-      email: 'hong@example.com',
-      job: '프론트엔드 개발자',
-      description: '안녕하세요! 포트폴리오 첨삭을 받고 싶습니다.',
+      profileUrl: 'profileEX.png',
+      email: 'jaeyoon@example.com',
+      job: '개발',
       experience: [
         {
           company: '넥슨',
           role: '마비노기 개발팀 팀장',
         },
+        {
+          company: '카카오엔터프라이즈',
+          role: '프론트엔드 엔지니어',
+        },
       ],
       education: [
         {
-          school: '한세대',
-          major: 'ICT융합학과 (4년제)',
+          school: '한세대학교',
+          major: 'ICT융합학과',
+        },
+        {
+          school: '서울과학기술대학교',
+          major: '컴퓨터공학과',
         },
       ],
     };
     setUser(dummyUser);
-
-    // 실제 연동 코드 (향후 사용 예정)
-    // axios.get('http://localhost:8080/users/me')
-    //   .then((res) => setUser(res.data.data))
-    //   .catch((err) => {
-    //     console.error('유저 정보 불러오기 실패:', err);
-    //     alert('로그인이 필요합니다.');
-    //     navigate('/');
-    //   });
   }, [navigate]);
 
   if (!user) return <div className="text-center py-10">유저 정보가 없습니다.</div>;
@@ -57,56 +56,61 @@ const MyProfile = () => {
     <div className="px-6 py-8 max-w-xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">프로필</h1>
 
-      <div className="flex items-center gap-4 mb-6">
-        <UserBadge role={user.role} profileUrl={user.profileUrl} className="w-16 h-16" />
-        <div>
-          <div className="text-lg font-semibold">{user.nickname}</div>
-          <div className="text-sm text-gray-500">{user.role === 'MENTEE' ? '멘티' : '멘토'}</div>
-        </div>
-      </div>
+      {/* 프로필 상단 */}
+      <div className="flex items-start gap-4 mb-6">
+        <UserBadge
+          role={user.role}
+          profileUrl={user.profileUrl}
+          className="w-20 h-20 shrink-0"
+        />
 
-      <div className="space-y-4 mb-6">
-        <div className="rounded-lg border p-4">
-          <div className="text-xs text-gray-500 mb-1">이메일</div>
-          <div className="text-sm font-medium text-gray-800">{user.email || '-'}</div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-xs text-gray-500 mb-1">직무</div>
-          <div className="text-sm font-medium text-gray-800">{user.job || '-'}</div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-xs text-gray-500 mb-1">소개</div>
-          <div className="text-sm font-medium text-gray-800 whitespace-pre-wrap">
-            {user.description || '-'}
+        <div className="flex flex-col justify-center items-start">
+          {/* 닉네임 */}
+          <div className="flex items-baseline gap-2">
+            <div className="text-xl font-bold text-gray-900">{user.nickname} </div>
+            <div className="text-sm text-gray-600">{user.role === 'MENTEE' ? '멘티' : '멘토'}님</div>
           </div>
+
+          {/* 역할 + 직무 */}
+          <div className="text-sm text-gray-600 mt-1">
+            {user.job && <> {user.job}</>}
+          </div>
+
+          {/* 이메일 */}
+          {user.email && (
+            <div className="text-sm text-gray-500 mt-2">이메일: {user.email}</div>
+          )}
         </div>
       </div>
 
       {/* 경력 */}
-      {user.experience && user.experience.length > 0 && (
-        <div className="mb-6">
-          <div className="text-sm font-medium mb-2">경력</div>
-          {user.experience.map((exp, idx) => (
-            <div key={idx} className="p-3 border rounded-lg mb-2">
-              <div className="text-sm font-semibold">{exp.company}</div>
-              <div className="text-xs text-gray-600">{exp.role}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="mb-6">
+        <div className="text-sm font-medium mb-2">경력</div>
+        <CareerViewItem
+          careers={(user.experience || []).map((exp) => ({
+            companyName: exp.company,
+            department: '',
+            position: exp.role,
+            startedDate: '',
+            endedDate: '',
+          }))}
+        />
+      </div>
 
       {/* 학력 */}
-      {user.education && user.education.length > 0 && (
-        <div className="mb-6">
-          <div className="text-sm font-medium mb-2">학력</div>
-          {user.education.map((edu, idx) => (
-            <div key={idx} className="p-3 border rounded-lg mb-2">
-              <div className="text-sm font-semibold">{edu.school}</div>
-              <div className="text-xs text-gray-600">{edu.major}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="mb-6">
+        <div className="text-sm font-medium mb-2">학력</div>
+        <EducationViewItem
+          educations={(user.education || []).map((edu) => ({
+            schoolName: edu.school,
+            major: edu.major,
+            degree: '',
+            admissionDate: '',
+            graduationDate: '',
+            status: '',
+          }))}
+        />
+      </div>
 
       <div className="flex justify-end">
         <Button

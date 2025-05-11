@@ -1,182 +1,155 @@
-import { useEffect, useState } from 'react';
+import LabeledInput from 'components/common/LabeledInput';
+import PasswordInput from 'components/common/PasswordInput';
+import Select from 'components/common/Select';
 import Button from 'components/common/Button';
-import ProfileFieldItem from './ProfileFieldItem';
+import ProfileImageUploader from './ProfileImageUploader';
+import EducationItem from './EducationItem';
+import CareerItem from './CareerItem';
 
-const dummyUser = {
-  profileUrl: '', // 더 이상 사용 안 함
-  nickname: '홍길동',
-  phone: '010-1234-5678',
-  job: '프론트엔드 개발자',
-  email: 'hong@example.com',
-  password: '',
-  description: '안녕하세요! 포트폴리오 첨삭을 받고 싶습니다.',
-  experience: [{ company: '카카오', role: '프론트엔드 엔지니어' }],
-  education: [{ school: '한세대학교', major: 'ICT융합학과' }],
-};
+interface Education {
+  schoolName: string;
+  major: string;
+  degree: string;
+  admissionDate: string;
+  graduationDate: string;
+  status: string;
+}
+
+interface Career {
+  companyName: string;
+  department: string;
+  position: string;
+  startedDate: string;
+  endedDate: string;
+}
 
 interface Props {
-  // profileUrl 제거, 대신 파일로 받음
+  profileFile: File | null;
+  setProfileFile: (file: File | null) => void;
+  name: string;
+  setName: (v: string) => void;
   nickname: string;
   setNickname: (v: string) => void;
+  email: string;
   phone: string;
   setPhone: (v: string) => void;
   job: string;
   setJob: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
-  email: string;
-  setEmail: (v: string) => void;
-  description: string;
-  setDescription: (v: string) => void;
-  experiences: { company: string; role: string }[];
-  setExperiences: (v: { company: string; role: string }[]) => void;
-  educations: { school: string; major: string }[];
-  setEducations: (v: { school: string; major: string }[]) => void;
-  profileFile: File | null;
-  setProfileFile: (f: File | null) => void;
+  passwordConfirm: string;
+  setPasswordConfirm: (v: string) => void;
+  educations: Education[];
+  setEducations: (v: Education[]) => void;
+  careers: Career[];
+  setCareers: (v: Career[]) => void;
   onSubmit: () => void;
 }
 
 const ProfileForm = ({
+  profileFile,
+  setProfileFile,
+  name,
+  setName,
   nickname,
   setNickname,
+  email,
   phone,
   setPhone,
   job,
   setJob,
   password,
   setPassword,
-  email,
-  setEmail,
-  description,
-  setDescription,
-  experiences,
-  setExperiences,
+  passwordConfirm,
+  setPasswordConfirm,
   educations,
   setEducations,
-  profileFile,
-  setProfileFile,
+  careers,
+  setCareers,
   onSubmit,
 }: Props) => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    // 초기화: 이미지 없음, 나머지 정보 설정
-    setNickname(dummyUser.nickname);
-    setPhone(dummyUser.phone);
-    setJob(dummyUser.job);
-    setEmail(dummyUser.email);
-    setPassword('');
-    setDescription(dummyUser.description);
-    setExperiences(dummyUser.experience);
-    setEducations(dummyUser.education);
-  }, [
-    setNickname,
-    setPhone,
-    setJob,
-    setEmail,
-    setPassword,
-    setDescription,
-    setExperiences,
-    setEducations,
-  ]);
-
-  const handleAdd = <T extends object>(list: T[], setter: (v: T[]) => void, empty: T) => {
-    setter([...list, empty]);
+  const handleEducationChange = (index: number, field: keyof Education, value: string) => {
+    const updated = [...educations];
+    updated[index][field] = value;
+    setEducations(updated);
   };
 
-  const handleRemove = <T extends object>(list: T[], setter: (v: T[]) => void, index: number) => {
-    if (list.length <= 1) return;
-    setter(list.filter((_, i) => i !== index));
+  const handleCareerChange = (index: number, field: keyof Career, value: string) => {
+    const updated = [...careers];
+    updated[index][field] = value;
+    setCareers(updated);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setProfileFile(file);
-
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewUrl(reader.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setPreviewUrl(null);
-    }
-  };
+  // NOTE: 현재는 하드코딩된 직무 옵션. 추후 백엔드에서 받아올 예정
+  // const jobOptions = await fetch('/api/jobs').then(res => res.json());
+  const jobOptions = [
+    { label: '개발', value: '개발' },
+    { label: '마케팅/광고', value: '마케팅/광고' },
+    { label: '경영/비즈니스', value: '경영/비즈니스' },
+    { label: '디자인', value: '디자인' },
+  ];
 
   return (
-    <div className="max-w-xl mx-auto px-6 py-8">
-      <h1 className="text-3xl font-bold mb-6">프로필 수정</h1>
+    <div className="max-w-xl mx-auto px-6 py-8 text-base">
+      <h1 className="text-2xl font-bold mb-6">프로필 수정</h1>
 
-      <div className="space-y-4 mb-6">
-        {/* 이미지 업로드 + 미리보기 */}
-        <div>
-          <label className="block text-sm font-medium mb-1">프로필 이미지</label>
-          {previewUrl && (
-            <img
-              src={previewUrl}
-              alt="미리보기"
-              className="w-24 h-24 object-cover rounded-full mb-2"
-            />
-          )}
-          <input type="file" accept="image/*" onChange={handleImageChange} />
+      <ProfileImageUploader profileFile={profileFile} setProfileFile={setProfileFile} />
+
+      <div className="space-y-4">
+        <LabeledInput label="이메일" value={email} onChange={() => {}} readOnly />
+        <LabeledInput label="이름" value={name} onChange={setName} />
+        <LabeledInput label="닉네임" value={nickname} onChange={setNickname} />
+        <LabeledInput label="전화번호" value={phone} onChange={setPhone} />
+
+        <Select
+          label="직무"
+          options={jobOptions}
+          value={job}
+          onChange={(e) => setJob(e.target.value)}
+        />
+
+        <PasswordInput label="비밀번호" value={password} onChange={setPassword} />
+        <PasswordInput label="비밀번호 확인" value={passwordConfirm} onChange={setPasswordConfirm} />
+
+        <div className="pt-6">
+          <h2 className="text-lg font-semibold mb-2">학력 정보</h2>
+          {educations.map((edu, i) => (
+            <div key={i} className="mb-4">
+              <h3 className="text-sm font-medium text-gray-600 mb-1">학교 {i + 1}</h3>
+              <EducationItem
+                education={edu}
+                index={i}
+                onChange={handleEducationChange}
+                onRemove={(index) => setEducations(educations.filter((_, idx) => idx !== index))}
+              />
+            </div>
+          ))}
+          <Button label="+ 학력 추가" onClick={() => setEducations([...educations, {
+            schoolName: '', major: '', degree: '', admissionDate: '', graduationDate: '', status: ''
+          }])} />
         </div>
 
-        <input className="w-full p-3 border rounded" placeholder="닉네임" value={nickname} onChange={(e) => setNickname(e.target.value)} />
-        <input className="w-full p-3 border rounded" placeholder="전화번호" value={phone} onChange={(e) => setPhone(e.target.value)} />
-        <input className="w-full p-3 border rounded" placeholder="직무" value={job} onChange={(e) => setJob(e.target.value)} />
-        <input className="w-full p-3 border rounded" placeholder="이메일" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="w-full p-3 border rounded" type="password" placeholder="비밀번호" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <textarea className="w-full p-3 border rounded" rows={4} placeholder="자기소개" value={description} onChange={(e) => setDescription(e.target.value)} />
-      </div>
+        <div className="pt-6">
+          <h2 className="text-lg font-semibold mb-2">경력 정보</h2>
+          {careers.map((car, i) => (
+            <div key={i} className="mb-4">
+              <h3 className="text-sm font-medium text-gray-600 mb-1">회사 {i + 1}</h3>
+              <CareerItem
+                career={car}
+                index={i}
+                onChange={handleCareerChange}
+                onRemove={(index) => setCareers(careers.filter((_, idx) => idx !== index))}
+              />
+            </div>
+          ))}
+          <Button label="+ 경력 추가" onClick={() => setCareers([...careers, {
+            companyName: '', department: '', position: '', startedDate: '', endedDate: ''
+          }])} />
+        </div>
 
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold mb-2">경력</h2>
-        {experiences.map((exp, idx) => (
-          <ProfileFieldItem
-            key={idx}
-            index={idx}
-            value={exp}
-            fields={[
-              ['company', '회사명'],
-              ['role', '직무'],
-            ]}
-            onChange={(updated) => {
-              const updatedList = [...experiences];
-              updatedList[idx] = updated;
-              setExperiences(updatedList);
-            }}
-            onRemove={() => handleRemove(experiences, setExperiences, idx)}
-            canRemove={experiences.length > 1}
-          />
-        ))}
-        <Button label="+ 경력 추가" onClick={() => handleAdd(experiences, setExperiences, { company: '', role: '' })} />
-      </div>
-
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold mb-2">학력</h2>
-        {educations.map((edu, idx) => (
-          <ProfileFieldItem
-            key={idx}
-            index={idx}
-            value={edu}
-            fields={[
-              ['school', '학교명'],
-              ['major', '전공'],
-            ]}
-            onChange={(updated) => {
-              const updatedList = [...educations];
-              updatedList[idx] = updated;
-              setEducations(updatedList);
-            }}
-            onRemove={() => handleRemove(educations, setEducations, idx)}
-            canRemove={educations.length > 1}
-          />
-        ))}
-        <Button label="+ 학력 추가" onClick={() => handleAdd(educations, setEducations, { school: '', major: '' })} />
-      </div>
-
-      <div className="flex justify-end">
-        <Button label="저장" variant="primary" onClick={onSubmit} />
+        <div className="flex justify-end mt-6">
+          <Button label="저장" variant="primary" onClick={onSubmit} />
+        </div>
       </div>
     </div>
   );

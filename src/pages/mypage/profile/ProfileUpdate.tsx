@@ -2,65 +2,93 @@ import { useState } from 'react';
 import ProfileForm from 'components/mypage/myProfile/ProfileForm';
 
 const ProfileUpdate = () => {
-  const [profileFile, setProfileFile] = useState<File | null>(null);
-  const [nickname, setNickname] = useState('');
-  const [phone, setPhone] = useState('');
-  const [job, setJob] = useState('');
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [description, setDescription] = useState('');
-  const [experiences, setExperiences] = useState([{ company: '', role: '' }]);
-  const [educations, setEducations] = useState([{ school: '', major: '' }]);
+  const dummyUser = {
+    name: '신재윤',
+    nickname: '감자',
+    email: 'sjy1234@example.com',
+    phone: '010-1234-5678',
+    job: '프론트엔드 개발자',
+    password: '12345678',
+    passwordConfirm: '12345678',
+    profileFile: null,
+    educations: [
+      {
+        schoolName: '한세대학교',
+        major: 'ICT융합학과',
+        degree: '학사',
+        admissionDate: '2020-03-02',
+        graduationDate: '2024-02-15',
+        status: '졸업'
+      }
+    ],
+    careers: [
+      {
+        companyName: '네이버',
+        department: 'FE개발팀',
+        position: '프론트엔드 엔지니어',
+        startedDate: '2024-03-01',
+        endedDate: '2025-02-28'
+      }
+    ]
+  };
+
+  const [profileFile, setProfileFile] = useState<File | null>(dummyUser.profileFile);
+  const [name, setName] = useState(dummyUser.name);
+  const [nickname, setNickname] = useState(dummyUser.nickname);
+  const [email] = useState(dummyUser.email);
+  const [phone, setPhone] = useState(dummyUser.phone);
+  const [job, setJob] = useState(dummyUser.job);
+  const [password, setPassword] = useState(dummyUser.password);
+  const [passwordConfirm, setPasswordConfirm] = useState(dummyUser.passwordConfirm);
+  const [educations, setEducations] = useState(dummyUser.educations);
+  const [careers, setCareers] = useState(dummyUser.careers);
 
   const handleSubmit = async () => {
-    const formData = new FormData();
-
-    if (profileFile) {
-      formData.append('profileImage', profileFile);
+    if (password !== passwordConfirm) {
+      alert('비밀번호가 일치하지 않습니다.');
+      return;
     }
 
+    const formData = new FormData();
+    formData.append('name', name);
     formData.append('nickname', nickname);
+    formData.append('email', email);
     formData.append('phone', phone);
     formData.append('job', job);
     formData.append('password', password);
-    formData.append('email', email);
-    formData.append('description', description);
-    formData.append('experience', JSON.stringify(experiences));
-    formData.append('education', JSON.stringify(educations));
+    if (profileFile) formData.append('profileImage', profileFile);
+    formData.append('educations', JSON.stringify(educations));
+    formData.append('careers', JSON.stringify(careers));
 
+    formData.forEach((value, key) => {
+      console.log(`${key}:`, value);
+    });
 
-    try {
-      // TODO: 실제 요청 시 URL 수정
-      // await axios.post('/users/update', formData, {
-      //   headers: { 'Content-Type': 'multipart/form-data' },
-      // });
-      alert('프로필이 저장되었습니다.');
-    } catch (error) {
-      console.error('저장 실패:', error);
-      alert('저장 중 오류가 발생했습니다.');
-    }
+    // 실제 서버 요청 예시
+    // await axios.post('/api/users/update', formData);
   };
 
   return (
     <ProfileForm
       profileFile={profileFile}
       setProfileFile={setProfileFile}
+      name={name}
+      setName={setName}
       nickname={nickname}
       setNickname={setNickname}
+      email={email}
       phone={phone}
       setPhone={setPhone}
-      password={password}
-      setPassword={setPassword}
-      email={email}
-      setEmail={setEmail}
       job={job}
       setJob={setJob}
-      description={description}
-      setDescription={setDescription}
-      experiences={experiences}
-      setExperiences={setExperiences}
+      password={password}
+      setPassword={setPassword}
+      passwordConfirm={passwordConfirm}
+      setPasswordConfirm={setPasswordConfirm}
       educations={educations}
       setEducations={setEducations}
+      careers={careers}
+      setCareers={setCareers}
       onSubmit={handleSubmit}
     />
   );

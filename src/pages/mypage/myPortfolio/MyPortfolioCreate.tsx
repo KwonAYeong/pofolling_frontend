@@ -29,9 +29,7 @@ const MyPortfolioCreate = () => {
       });
 
       alert('포트폴리오가 등록되었습니다.');
-      // 백엔드랑 맞춰야 주석해체 가능
-      // const newId = response.data.portfolioId;
-      // navigate(`/mypage/portfolio/detail/${newId}`);
+      navigate(`/mypage/portfolio`);
     } catch (err) {
       console.error('등록 실패:', err);
       alert('등록 중 오류가 발생했습니다.');
