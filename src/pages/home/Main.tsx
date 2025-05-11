@@ -1,16 +1,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from 'context/UserContext';
 
 const MainPage = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
 
   const goToReview = () => {
-    navigate('../pages/edit/Requests'); // 첨삭 페이지 경로
+    if (!user) return;
+
+    if (user.role === 'MENTOR') {
+      navigate('/edit-response'); // 멘토 → 첨삭 요청 리스트
+    } else if (user.role === 'MENTEE') {
+      navigate('/edit-requests'); // 멘티 → 포트폴리오 리스트
+    }
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* 메인 콘텐츠 */}
       <main className="flex-1 flex flex-col items-center justify-center">
         <h1 className="text-3xl font-bold mb-6">MAIN</h1>
         <button
