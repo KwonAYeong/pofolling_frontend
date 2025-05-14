@@ -1,6 +1,5 @@
 import { Route } from 'react-router-dom';
 
-
 import PortfolioDetailMentor from '../pages/edit/ResponseDetail';
 import Request from '../pages/edit/Requests';
 import Resoponse from '../pages/edit/Response';
@@ -13,7 +12,7 @@ const EditRoutes = (
     <Route path="edit-requests" element={<Request />} />
     <Route path="edit-response" element={<Resoponse />} />
     {/* chat */}
-    <Route path="chat/:id" element={<Chat />} />
+    <Route path="chat" element={<Chat />} />
   </>
 );
 

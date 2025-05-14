@@ -4,53 +4,62 @@ import UserBadge from 'components/common/UserBadge';
 import Button from 'components/common/Button';
 import CareerViewItem from 'components/mypage/myProfile/CareerViewItem';
 import EducationViewItem from 'components/mypage/myProfile/EducationViewItem';
+import { useUser } from 'context/UserContext';
+import axios from 'api/axios';
 
 interface User {
-  nickname: string; // 닉네임
+  nickName: string;
+  profileImage?: string;
+  email: string;
+  jobType?: string;
   role: 'MENTEE' | 'MENTOR';
-  profileUrl?: string;
-  email?: string;
-  job?: string;
-  experience?: { company: string; role: string }[];
-  education?: { school: string; major: string }[];
+  careers?: {
+    companyName: string;
+    role: string;
+    department?: string;
+    position?: string;
+    startedAt?: string;
+    endedAt?: string;
+  }[];
+  educations?: {
+    schoolName: string;
+    major: string;
+    degree?: string;
+    admissionDate?: string;
+    graduationDate?: string;
+    educationStatus?: string;
+  }[];
 }
+
 
 const MyProfile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const { user: loggedInUser } = useUser();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const dummyUser: User = {
-      nickname: '부실감자',
-      role: 'MENTEE',
-      profileUrl: 'profileEX.png',
-      email: 'jaeyoon@example.com',
-      job: '개발',
-      experience: [
-        {
-          company: '넥슨',
-          role: '마비노기 개발팀 팀장',
-        },
-        {
-          company: '카카오엔터프라이즈',
-          role: '프론트엔드 엔지니어',
-        },
-      ],
-      education: [
-        {
-          school: '한세대학교',
-          major: 'ICT융합학과',
-        },
-        {
-          school: '서울과학기술대학교',
-          major: '컴퓨터공학과',
-        },
-      ],
-    };
-    setUser(dummyUser);
-  }, [navigate]);
+    const fetchUser = async () => {
+      try {
+        setIsLoading(true);
+        if (!loggedInUser) return;
 
-  if (!user) return <div className="text-center py-10">유저 정보가 없습니다.</div>;
+        const userId = loggedInUser.user_id;
+        const res = await axios.get(`/mypage/profile/${userId}`);
+
+        setUser(res.data);
+      } catch (err) {
+        console.error('유저 정보 불러오기 실패:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [loggedInUser]);
+
+  if (isLoading) return <div className="text-center py-10"></div>;
+  if (!user) return <div className="text-center py-10">유저 정보 없음</div>;
 
   return (
     <div className="px-6 py-8 max-w-xl mx-auto">
@@ -60,25 +69,17 @@ const MyProfile = () => {
       <div className="flex items-start gap-4 mb-6">
         <UserBadge
           role={user.role}
-          profileUrl={user.profileUrl}
+          profileUrl={user.profileImage}
           className="w-20 h-20 shrink-0"
         />
-
         <div className="flex flex-col justify-center items-start">
-          {/* 닉네임 */}
           <div className="flex items-baseline gap-2">
-            <div className="text-xl font-bold text-gray-900">{user.nickname} </div>
+            <div className="text-xl font-bold text-gray-900">{user.nickName}</div>
             <div className="text-sm text-gray-600">{user.role === 'MENTEE' ? '멘티' : '멘토'}님</div>
           </div>
-
-          {/* 역할 + 직무 */}
-          <div className="text-sm text-gray-600 mt-1">
-            {user.job && <> {user.job}</>}
-          </div>
-
-          {/* 이메일 */}
+          <div className="text-sm text-gray-600 mt-1">{user.jobType}</div>
           {user.email && (
-            <div className="text-sm text-gray-500 mt-2">이메일: {user.email}</div>
+            <div className="text-sm text-gray-500 mt-1">{user.email}</div>
           )}
         </div>
       </div>
@@ -87,12 +88,12 @@ const MyProfile = () => {
       <div className="mb-6">
         <div className="text-sm font-medium mb-2">경력</div>
         <CareerViewItem
-          careers={(user.experience || []).map((exp) => ({
-            companyName: exp.company,
-            department: '',
-            position: exp.role,
-            startedDate: '',
-            endedDate: '',
+          careers={(user.careers || []).map((cer) => ({
+            companyName: cer.companyName,
+            department: cer.department || '',
+            position: cer.position || cer.role || '',
+            startedAt: cer.startedAt || '',
+            endedAt: cer.endedAt || '',
           }))}
         />
       </div>
@@ -101,13 +102,13 @@ const MyProfile = () => {
       <div className="mb-6">
         <div className="text-sm font-medium mb-2">학력</div>
         <EducationViewItem
-          educations={(user.education || []).map((edu) => ({
-            schoolName: edu.school,
+          educations={(user.educations || []).map((edu) => ({
+            schoolName: edu.schoolName,
             major: edu.major,
-            degree: '',
-            admissionDate: '',
-            graduationDate: '',
-            status: '',
+            degree: edu.degree || '',
+            admissionDate: edu.admissionDate || '',
+            graduationDate: edu.graduationDate || '',
+            educationStatus: edu.educationStatus || '',
           }))}
         />
       </div>

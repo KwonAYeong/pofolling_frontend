@@ -5,23 +5,7 @@ import Button from 'components/common/Button';
 import ProfileImageUploader from './ProfileImageUploader';
 import EducationItem from './EducationItem';
 import CareerItem from './CareerItem';
-
-interface Education {
-  schoolName: string;
-  major: string;
-  degree: string;
-  admissionDate: string;
-  graduationDate: string;
-  status: string;
-}
-
-interface Career {
-  companyName: string;
-  department: string;
-  position: string;
-  startedDate: string;
-  endedDate: string;
-}
+import { Careers,Education  } from 'types/profile';
 
 interface Props {
   profileFile: File | null;
@@ -31,19 +15,22 @@ interface Props {
   nickname: string;
   setNickname: (v: string) => void;
   email: string;
-  phone: string;
-  setPhone: (v: string) => void;
-  job: string;
-  setJob: (v: string) => void;
+  phoneNumber: string;
+  setphoneNumber: (v: string) => void;
+  jobType: string;
+  setjobType: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
   passwordConfirm: string;
   setPasswordConfirm: (v: string) => void;
   educations: Education[];
   setEducations: (v: Education[]) => void;
-  careers: Career[];
-  setCareers: (v: Career[]) => void;
+  careers: Careers[];
+  setCareers: (v: Careers[]) => void;
   onSubmit: () => void;
+  onCheckNickname: () => Promise<void>;
+  isNicknameAvailable: boolean | null;
+  isPasswordMatch: boolean | null;
 }
 
 const ProfileForm = ({
@@ -54,10 +41,10 @@ const ProfileForm = ({
   nickname,
   setNickname,
   email,
-  phone,
-  setPhone,
-  job,
-  setJob,
+  phoneNumber,
+  setphoneNumber,
+  jobType,
+  setjobType,
   password,
   setPassword,
   passwordConfirm,
@@ -67,6 +54,9 @@ const ProfileForm = ({
   careers,
   setCareers,
   onSubmit,
+  onCheckNickname,
+  isNicknameAvailable,
+  isPasswordMatch,
 }: Props) => {
   const handleEducationChange = (index: number, field: keyof Education, value: string) => {
     const updated = [...educations];
@@ -74,15 +64,13 @@ const ProfileForm = ({
     setEducations(updated);
   };
 
-  const handleCareerChange = (index: number, field: keyof Career, value: string) => {
+  const handleCareerChange = (index: number, field: keyof Careers, value: string) => {
     const updated = [...careers];
     updated[index][field] = value;
     setCareers(updated);
   };
 
-  // NOTE: 현재는 하드코딩된 직무 옵션. 추후 백엔드에서 받아올 예정
-  // const jobOptions = await fetch('/api/jobs').then(res => res.json());
-  const jobOptions = [
+  const jobTypeOptions = [
     { label: '개발', value: '개발' },
     { label: '마케팅/광고', value: '마케팅/광고' },
     { label: '경영/비즈니스', value: '경영/비즈니스' },
@@ -97,20 +85,48 @@ const ProfileForm = ({
 
       <div className="space-y-4">
         <LabeledInput label="이메일" value={email} onChange={() => {}} readOnly />
-        <LabeledInput label="이름" value={name} onChange={setName} />
-        <LabeledInput label="닉네임" value={nickname} onChange={setNickname} />
-        <LabeledInput label="전화번호" value={phone} onChange={setPhone} />
+        <LabeledInput label="이름" value={name} onChange={setName} placeholder="예: 홍길동" />
 
+        <div>
+          <label className="text-sm font-medium block mb-1">닉네임</label>
+          <div className="flex gap-2 flex-nowrap">
+            <input
+              className="w-full p-2 border rounded"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="예: 감자도리"
+            />
+            <Button label="중복 확인" onClick={onCheckNickname} className="whitespace-nowrap"/>
+          </div>
+          {isNicknameAvailable === true && (
+            <p className="text-green-600 text-sm mt-1">사용 가능한 닉네임입니다.</p>
+          )}
+          {isNicknameAvailable === false && (
+            <p className="text-red-600 text-sm mt-1">이미 사용 중인 닉네임입니다.</p>
+          )}
+        </div>
+
+        <LabeledInput
+          label="전화번호"
+          value={phoneNumber}
+          onChange={setphoneNumber}
+          placeholder="예: 010-1234-5678"
+        />
         <Select
           label="직무"
-          options={jobOptions}
-          value={job}
-          onChange={(e) => setJob(e.target.value)}
+          options={jobTypeOptions}
+          value={jobType}
+          onChange={(e) => setjobType(e.target.value)}
         />
-
         <PasswordInput label="비밀번호" value={password} onChange={setPassword} />
         <PasswordInput label="비밀번호 확인" value={passwordConfirm} onChange={setPasswordConfirm} />
-
+        {isPasswordMatch === false && (
+          <p className="text-red-600 text-sm">비밀번호가 일치하지 않습니다.</p>
+        )}
+        {isPasswordMatch === true && password && passwordConfirm && (
+          <p className="text-green-600 text-sm">비밀번호가 일치합니다.</p>
+        )}
+        {/* 학력 정보 */}
         <div className="pt-6">
           <h2 className="text-lg font-semibold mb-2">학력 정보</h2>
           {educations.map((edu, i) => (
@@ -124,11 +140,25 @@ const ProfileForm = ({
               />
             </div>
           ))}
-          <Button label="+ 학력 추가" onClick={() => setEducations([...educations, {
-            schoolName: '', major: '', degree: '', admissionDate: '', graduationDate: '', status: ''
-          }])} />
+          <Button
+            label="+ 학력 추가"
+            onClick={() =>
+              setEducations([
+                ...educations,
+                {
+                  schoolName: '',
+                  major: '',
+                  degree: '',
+                  admissionDate: '',
+                  graduationDate: '',
+                  educationStatus: '',
+                },
+              ])
+            }
+          />
         </div>
 
+        {/* 경력 정보 */}
         <div className="pt-6">
           <h2 className="text-lg font-semibold mb-2">경력 정보</h2>
           {careers.map((car, i) => (
@@ -142,9 +172,21 @@ const ProfileForm = ({
               />
             </div>
           ))}
-          <Button label="+ 경력 추가" onClick={() => setCareers([...careers, {
-            companyName: '', department: '', position: '', startedDate: '', endedDate: ''
-          }])} />
+          <Button
+            label="+ 경력 추가"
+            onClick={() =>
+              setCareers([
+                ...careers,
+                {
+                  companyName: '',
+                  department: '',
+                  position: '',
+                  startedAt: '',
+                  endedAt: '',
+                },
+              ])
+            }
+          />
         </div>
 
         <div className="flex justify-end mt-6">

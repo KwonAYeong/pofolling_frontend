@@ -6,27 +6,28 @@ import PortfolioDetailCard from '../../components/portfolio/PortfolioDetailCard'
 import Button from '../../components/common/Button';
 import { MentoringRequest } from '../../context/MentoringContext';
 
+
 const RequestDetail = () => {
   const { id: editRequestIdFromUrl } = useParams(); 
   const navigate = useNavigate();
   const { user } = useUser();
   const [request, setRequest] = useState<MentoringRequest | null>(null);
+  const [isLoading, setIsLoading] = useState(true); 
 
   useEffect(() => {
-    const fetchRequest = async () => {
-      
-      try {
-        const res = await axios.get(`http://localhost:8080/edit-response/${editRequestIdFromUrl}`);
-        setRequest(res.data?.data);
-        console.log("상세 응답:", res.data?.data);
-      } catch (err) {
-        console.error('요청 상세 조회 실패:', err);
-      }
-      
-    };
+ const fetchRequest = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8080/edit-response/${editRequestIdFromUrl}`);
+      setRequest(res.data?.data);
+    } catch (err) {
+      console.error('요청 상세 조회 실패:', err);
+    } finally {
+      setIsLoading(false); // 로딩 끝
+    }
+  };
 
-    fetchRequest();
-  }, [editRequestIdFromUrl]);
+  fetchRequest();
+}, [editRequestIdFromUrl]);
 
   const handleAccept = async () => {
     if (!editRequestIdFromUrl || !user?.user_id) {
@@ -46,9 +47,14 @@ const RequestDetail = () => {
     }
   };
 
-  if (!request || !request.portfolioId) {
-    return <div className="p-6">요청을 찾을 수 없습니다.</div>;
-  }
+
+if (isLoading) {
+  return <div></div>;
+}
+
+if (!request || !request.portfolioId) {
+  return <div className="p-6 text-red-500">요청을 찾을 수 없습니다.</div>;
+}
   
   return (
     

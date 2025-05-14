@@ -2,7 +2,7 @@ type StatusType = 'REGISTERED' | 'REQUESTED' | 'IN_PROGRESS' | 'COMPLETED';
 
 const statusMap: Record<StatusType, { label: string; dotColor: string }> = {
   REGISTERED: { label: '등록됨', dotColor: 'bg-gray-400' },
-  REQUESTED: { label: '요청대기', dotColor: 'bg-orange-300' },
+  REQUESTED: { label: '요청중', dotColor: 'bg-orange-300' },
   IN_PROGRESS: { label: '첨삭중', dotColor: 'bg-blue-300' },
   COMPLETED: { label: '첨삭완료', dotColor: 'bg-green-400' },
 };

@@ -1,17 +1,11 @@
 import { X } from 'lucide-react';
-
-interface Career {
-  companyName: string;
-  department: string;
-  position: string;
-  startedDate: string;
-  endedDate: string;
-}
+import { Careers } from 'types/profile';
+import LabeledInput from 'components/common/LabeledInput';
 
 interface Props {
-  career: Career;
+  career: Careers;
   index: number;
-  onChange: (index: number, field: keyof Career, value: string) => void;
+  onChange: (index: number, field: keyof Careers, value: string) => void;
   onRemove: (index: number) => void;
 }
 
@@ -25,12 +19,38 @@ const CareerItem = ({ career, index, onChange, onRemove }: Props) => (
     >
       <X size={18} strokeWidth={2} />
     </button>
+
     <div className="space-y-2">
-      <input className="w-full p-2 border rounded" placeholder="회사명" value={career.companyName} onChange={(e) => onChange(index, 'companyName', e.target.value)} />
-      <input className="w-full p-2 border rounded" placeholder="부서" value={career.department} onChange={(e) => onChange(index, 'department', e.target.value)} />
-      <input className="w-full p-2 border rounded" placeholder="직책" value={career.position} onChange={(e) => onChange(index, 'position', e.target.value)} />
-      <input className="w-full p-2 border rounded" type="date" value={career.startedDate} onChange={(e) => onChange(index, 'startedDate', e.target.value)} />
-      <input className="w-full p-2 border rounded" type="date" value={career.endedDate} onChange={(e) => onChange(index, 'endedDate', e.target.value)} />
+      <LabeledInput
+        label="회사명"
+        value={career.companyName}
+        onChange={(v) => onChange(index, 'companyName', v)}
+        placeholder="예: 카카오엔터프라이즈"
+      />
+      <LabeledInput
+        label="부서"
+        value={career.department}
+        onChange={(v) => onChange(index, 'department', v)}
+        placeholder="예: 플랫폼서비스팀"
+      />
+      <LabeledInput
+        label="직책"
+        value={career.position}
+        onChange={(v) => onChange(index, 'position', v)}
+        placeholder="예: 프론트엔드 엔지니어"
+      />
+      <LabeledInput
+        label="입사일"
+        type="date"
+        value={career.startedAt}
+        onChange={(v) => onChange(index, 'startedAt', v)}
+      />
+      <LabeledInput
+        label="퇴사일"
+        type="date"
+        value={career.endedAt}
+        onChange={(v) => onChange(index, 'endedAt', v)}
+      />
     </div>
   </div>
 );

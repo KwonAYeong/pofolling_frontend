@@ -22,7 +22,7 @@ const PortfolioCard = ({ portfolio }: { portfolio: Portfolio }) => {
       {/* 날짜 + 상태 */}
       <div className="flex items-center gap-4 justify-end">
         <span className="text-xs text-gray-500 whitespace-nowrap">
-          {portfolio.createdAt.split('T')[0]}
+          {portfolio.updatedAt.split('T')[0]}
         </span>
         <StatusBadge status={portfolio.status} />
       </div>

@@ -5,7 +5,7 @@ import UserBadge from 'components/common/UserBadge';
 interface RequestCardProps {
   id: number;
   nickname: string;
-  job_id: string;
+  jobType: string;
   profileUrl?: string;
   title: string;
   requestDate: string;
@@ -14,7 +14,7 @@ interface RequestCardProps {
 const RequestCard = ({
   id,
   nickname,
-  job_id,
+  jobType,
   profileUrl,
   title,
   requestDate,
@@ -31,7 +31,7 @@ const RequestCard = ({
     <UserBadge role="MENTEE" profileUrl={profileUrl} className="w-10 h-10" />
     <div className="flex flex-col text-sm">
       <span className="font-semibold">{nickname}</span>
-      <span className="text-gray-500">{job_id}</span>
+      <span className="text-gray-500">{jobType}</span>
     </div>
   </div>
 

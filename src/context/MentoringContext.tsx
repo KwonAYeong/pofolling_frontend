@@ -7,7 +7,7 @@ export interface MentoringRequest {
   id: number;
   menteeId: number;
   role: UserRole;
-  job_id: string;
+  jobType: string;
   profileImage?: string;
   requestDate: string;
   status?: 'pending' | 'accepted' | 'in-progress' | 'done';

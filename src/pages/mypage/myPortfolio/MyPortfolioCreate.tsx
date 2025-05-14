@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from 'api/axios';
 import { useUser } from 'context/UserContext';
 import PortfolioForm from 'components/mypage/myPortfolio/PortfolioForm';
 
@@ -24,8 +24,12 @@ const MyPortfolioCreate = () => {
       formData.append('content', content);
       formData.append('file', file);
 
-      await axios.post('http://localhost:8080/portfolios', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      await axios.post('/mypage/portfolio', {
+        title,
+        content,
+        fileUrl: 'https://cdn.myproject.com/uploads/yourfile.pdf', // 또는 임시 경로
+      }, {
+        params: { userId: user?.user_id }
       });
 
       alert('포트폴리오가 등록되었습니다.');

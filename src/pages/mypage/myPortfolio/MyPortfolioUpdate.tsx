@@ -17,9 +17,10 @@ const MyPortfolioUpdate = () => {
   useEffect(() => {
     if (!id || !user) return;
 
-    axios.get(`http://localhost:8080/portfolios/${id}`)
+    axios
+      .get(`http://localhost:8080/mypage/portfolio/${id}`)
       .then((res) => {
-        const data = res.data.data;
+        const data = res.data;
         setPortfolio(data);
         setTitle(data.title);
         setContent(data.content);
@@ -32,28 +33,26 @@ const MyPortfolioUpdate = () => {
   }, [id, user, navigate]);
 
   const handleUpdate = async () => {
-    if (!title.trim() || !content.trim()) {
-      alert('제목과 내용을 입력해주세요.');
-      return;
-    }
+  if (!title.trim() || !content.trim()) {
+    alert('제목과 내용을 입력해주세요.');
+    return;
+  }
 
-    try {
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('content', content);
-      if (file) formData.append('file', file);
+  try {
+    await axios.patch(`http://localhost:8080/mypage/portfolio/${id}`, {
+      title,
+      content,
+      fileUrl: null, // 기존 URL 유지할 거면 그대로 넣어줘도 됨
+    });
 
-      await axios.put(`http://localhost:8080/portfolios/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    alert('포트폴리오가 수정되었습니다.');
+    navigate(`/mypage/portfolio/detail/${id}`); 
+  } catch (err) {
+    console.error('수정 실패:', err);
+    alert('수정 중 오류가 발생했습니다.');
+  }
+};
 
-      alert('포트폴리오가 수정되었습니다.');
-      navigate('/mypage/portfolio/detail/${newId}');
-    } catch (err) {
-      console.error('수정 실패:', err);
-      alert('수정 중 오류가 발생했습니다.');
-    }
-  };
 
   if (!portfolio) return <div className="text-center py-10">로딩 중...</div>;
 

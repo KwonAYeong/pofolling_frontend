@@ -1,13 +1,7 @@
 import { X } from 'lucide-react';
-
-interface Education {
-  schoolName: string;
-  major: string;
-  degree: string;
-  admissionDate: string;
-  graduationDate: string;
-  status: string;
-}
+import { Education } from 'types/profile';
+import LabeledInput from 'components/common/LabeledInput';
+import Select from 'components/common/Select';
 
 interface Props {
   education: Education;
@@ -26,13 +20,50 @@ const EducationItem = ({ education, index, onChange, onRemove }: Props) => (
     >
       <X size={18} strokeWidth={2} />
     </button>
+
     <div className="space-y-2">
-      <input className="w-full p-2 border rounded" placeholder="학교명" value={education.schoolName} onChange={(e) => onChange(index, 'schoolName', e.target.value)} />
-      <input className="w-full p-2 border rounded" placeholder="전공" value={education.major} onChange={(e) => onChange(index, 'major', e.target.value)} />
-      <input className="w-full p-2 border rounded" placeholder="학위" value={education.degree} onChange={(e) => onChange(index, 'degree', e.target.value)} />
-      <input className="w-full p-2 border rounded" type="date" value={education.admissionDate} onChange={(e) => onChange(index, 'admissionDate', e.target.value)} />
-      <input className="w-full p-2 border rounded" type="date" value={education.graduationDate} onChange={(e) => onChange(index, 'graduationDate', e.target.value)} />
-      <input className="w-full p-2 border rounded" placeholder="재학 상태 (예: 재학중, 졸업)" value={education.status} onChange={(e) => onChange(index, 'status', e.target.value)} />
+     <LabeledInput
+        label="학교명"
+        value={education.schoolName}
+        onChange={(v) => onChange(index, 'schoolName', v)}
+        placeholder="예: 한세대학교"
+      />
+      <LabeledInput
+        label="전공"
+        value={education.major}
+        onChange={(v) => onChange(index, 'major', v)}
+        placeholder="예: 컴퓨터공학과"
+      />
+      <LabeledInput
+        label="학위"
+        value={education.degree}
+        onChange={(v) => onChange(index, 'degree', v)}
+        placeholder="예: 학사"
+      />
+      <LabeledInput
+        label="입학일"
+        type="date"
+        value={education.admissionDate}
+        onChange={(v) => onChange(index, 'admissionDate', v)}
+      />
+      <LabeledInput
+        label="졸업일"
+        type="date"
+        value={education.graduationDate}
+        onChange={(v) => onChange(index, 'graduationDate', v)}
+      />
+
+      <Select
+        label="재학 상태"
+        options={[
+          { label: '재학', value: '재학' },
+          { label: '졸업', value: '졸업' },
+          { label: '휴학', value: '휴학' },
+          { label: '자퇴', value: '자퇴' },
+        ]}
+        value={education.educationStatus}
+        onChange={(e) => onChange(index, 'educationStatus', e.target.value)}
+      />
     </div>
   </div>
 );

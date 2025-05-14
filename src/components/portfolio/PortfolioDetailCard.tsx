@@ -2,6 +2,7 @@ import UserBadge from '../common/UserBadge';
 import Button from '../common/Button';
 import { UserRole } from 'context/UserContext';
 import type { Portfolio } from 'types/portfolio';
+import StatusBadge from 'components/mypage/myPortfolio/StatusBadge';
 
 interface Props {
   portfolio: Portfolio;
@@ -11,6 +12,8 @@ interface Props {
   showUserBadge?: boolean;
   showDownload?: boolean;
   downloadId?: number;
+  requestDate?: string;
+  updatedDate?: string;
   children?: React.ReactNode;
 }
 
@@ -22,19 +25,40 @@ const PortfolioDetailCard = ({
   showUserBadge = true,
   showDownload = true,
   downloadId,
+  requestDate,
+  updatedDate,
   children,
 }: Props) => {
   if (!portfolio) return <div>포트폴리오 정보가 없습니다.</div>;
 
   return (
     <div className="p-6 max-w-[600px] mx-auto border rounded-xl shadow-sm bg-white space-y-6">
-      {/* 프로필 영역 */}
-      {showUserBadge && userRole && (
-        <div className="flex items-center gap-3">
-          <UserBadge role="MENTEE" profileUrl={profileUrl} className="w-12 h-12" />
-          <span className="text-sm font-medium">{nickname}</span>
+      {/* 상단 정보: 프로필 or 수정일 + 상태 */}
+      <div className="flex justify-between items-start">
+        {/* 왼쪽: 멘토 → 프로필 + 등록일 / 멘티 → 수정일만 */}
+        <div className="flex flex-col gap-1">
+          {userRole === 'MENTOR' && (
+            <>
+              <div className="flex items-center gap-3">
+                <UserBadge role="MENTEE" profileUrl={profileUrl} className="w-12 h-12" />
+                <span className="text-sm font-medium">{nickname}</span>
+              </div>
+              <div className="text-xs text-gray-500 ml-14">
+                등록일: {requestDate?.slice(0, 10)}
+              </div>
+            </>
+          )}
+
+          {userRole === 'MENTEE' && (
+            <div className="text-xs text-gray-500">
+              최종 수정일: {updatedDate?.slice(0, 10)}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* 오른쪽: 상태 뱃지 (모두 공통) */}
+        <StatusBadge status={portfolio.status} />
+      </div>
 
       {/* 제목 */}
       <div className="flex items-start gap-4">
