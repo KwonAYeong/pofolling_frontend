@@ -9,7 +9,7 @@ interface RequestItem {
   nickname: string;
   profileImage: string;
   requestedAt: string;
-  job_id:string;
+  jobType:string;
 }
 
 const Response = () => {
@@ -53,7 +53,7 @@ const Response = () => {
             nickname={item.nickname}
             profileUrl={item.profileImage}
             requestDate={item.requestedAt?.slice(0, 10) || '날짜 없음'}
-            job_id={item.job_id}
+            jobType={item.jobType}
           />
         ))}
       </div>

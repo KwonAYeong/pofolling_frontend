@@ -7,7 +7,7 @@ const ChatButton = () => {
 
   return (
     <button
-      onClick={() => navigate('/chat/1')} 
+      onClick={() => navigate('/chat')} 
       className="fixed bottom-6 right-6 z-50 p-4 bg-white text-black rounded-full shadow-lg hover:bg-mentee transition"
     >
       <MessageCircle size={24} />
