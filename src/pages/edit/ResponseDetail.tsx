@@ -61,6 +61,7 @@ if (!request || !request.portfolioId) {
     <div className="p-6 max-w-[600px] mx-auto space-y-6">
       <PortfolioDetailCard
   portfolio={{
+    nickname: request.nickname,
     portfolioId: request.portfolioId,
     title: request.title,
     content: request.content,

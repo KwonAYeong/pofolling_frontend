@@ -1,6 +1,7 @@
 
 
 export interface Portfolio {
+  nickname: string | undefined;
   portfolioId: number;
   content: string;
   createdAt: string;
