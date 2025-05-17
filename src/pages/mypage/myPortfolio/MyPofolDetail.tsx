@@ -18,7 +18,7 @@ const MyPofolDetail = () => {
       navigate('/');
       return;
     }
-
+   
     const fetchPortfolio = async () => {
       try {
         const res = await axios.get<Portfolio>(`http://localhost:8080/mypage/portfolio/${id}`);
@@ -65,7 +65,7 @@ const MyPofolDetail = () => {
   };
 
   if (!portfolio) {
-    return <div className="text-center text-sm mt-10">포트폴리오를 찾을 수 없습니다.</div>;
+    return <div></div>;
   }
 
   return (
@@ -78,24 +78,28 @@ const MyPofolDetail = () => {
         portfolio={portfolio}
         userRole={user?.role}
         showUserBadge={false}
+        nickname={portfolio.nickname}
         requestDate={portfolio.createdAt}
         updatedDate={portfolio.updatedAt}
         downloadId={portfolio.portfolioId}
       >
+      <div className="flex gap-2">
+        {(portfolio.status === 'REGISTERED' || portfolio.status === 'COMPLETED') && (
+          <Button label="수정" variant="primary" onClick={handleEdit} />
+        )}
         {portfolio.status === 'REGISTERED' && (
-          <div className="flex gap-2">
-            <Button label="수정" variant="primary" onClick={handleEdit} />
-            <Button label="삭제" variant="danger" onClick={handleDelete} />
-          </div>
+          <Button label="삭제" variant="danger" onClick={handleDelete} />
         )}
+      </div>
 
-        {portfolio.status === 'REQUESTED' && (
-          <div className="mt-4">
-            <Button label="첨삭 요청 취소" variant="danger" onClick={handleCancelRequest} />
-          </div>
-        )}
-      </PortfolioDetailCard>
+      {portfolio.status === 'REQUESTED' && (
+      <div className="mt-4">
+        <Button label="첨삭 요청 취소" variant="danger" onClick={handleCancelRequest} />
+      </div>
+      )}
+          </PortfolioDetailCard>
     </div>
+    
   );
 };
 

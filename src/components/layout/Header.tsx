@@ -60,6 +60,7 @@ const Header = () => {
                 role={user.role}
                 profileUrl="/profileEX.png"
                 className="w-8 h-8"
+                hoverEffect
               />
             </button>
                 {/* 로그아웃 버튼 */}

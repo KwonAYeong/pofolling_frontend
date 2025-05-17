@@ -12,7 +12,7 @@ const Request = () => {
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-  const calledOnce = useRef(false); // ✅ useState 대신 useRef
+  const calledOnce = useRef(false); 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
 useEffect(() => {
@@ -26,7 +26,7 @@ useEffect(() => {
 
   if (calledOnce.current) return;
   calledOnce.current = true;
-  axios.get(`http://localhost:8080/edit-requests/${user?.user_id}`)
+  axios.get(`http://localhost:8080/edit-request/${user?.user_id}`)
     .then((res) => {
       const data: Portfolio[] = res.data.data ?? [];
       const available = data;
@@ -41,7 +41,7 @@ useEffect(() => {
     .catch((err) => {
       console.error('포트폴리오 불러오기 실패:', err);
     });
-}, [user, navigate]); // ✅ 여기서 calledOnce 의존성 제거 가능
+}, [user, navigate]); 
 
 
   const handleSelect = (id: number) => {
@@ -51,7 +51,7 @@ useEffect(() => {
   const handleSubmit = async () => {
     if (selectedId === null || !user || isSubmitting) return;
   
-    setIsSubmitting(true); // ✅ 요청 시작 시 바로 플래그 true
+    setIsSubmitting(true); 
   
     const selectedPortfolio = portfolios.find(
       (p) => p.portfolioId === selectedId
@@ -63,7 +63,7 @@ useEffect(() => {
     }
   
     try {
-      await axios.post('http://localhost:8080/edit-requests', {
+      await axios.post('http://localhost:8080/edit-request', {
         menteeId: user.user_id,
         portfolioId: selectedPortfolio.portfolioId,
        // requestedAt: new Date().toISOString(),
@@ -71,7 +71,7 @@ useEffect(() => {
       setPortfolios((prev) =>
         prev.filter((p) => p.portfolioId !== selectedId)
       );
-      // 로컬 상태도 REQUESTED로 업데이트
+      
       const updatedPortfolios = (user.portfolios ?? []).map((p) =>
         p.portfolioId === selectedId
           ? {
@@ -98,7 +98,7 @@ useEffect(() => {
             key={item.portfolioId}
             id={item.portfolioId}
             title={item.title}
-            uploadDate={item.updatedAt.slice(0, 10)} // YYYY-MM-DD 형식
+            uploadDate={item.updatedAt.slice(0, 10)} 
             selected={item.portfolioId === selectedId}
             onSelect={handleSelect}
           />

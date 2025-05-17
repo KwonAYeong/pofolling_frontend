@@ -22,7 +22,6 @@ const PortfolioDetailCard = ({
   userRole,
   profileUrl,
   nickname,
-  showUserBadge = true,
   showDownload = true,
   downloadId,
   requestDate,
@@ -34,27 +33,36 @@ const PortfolioDetailCard = ({
   return (
     <div className="p-6 max-w-[600px] mx-auto border rounded-xl shadow-sm bg-white space-y-6">
       {/* 상단 정보: 프로필 or 수정일 + 상태 */}
-      <div className="flex justify-between items-start">
-        {/* 왼쪽: 멘토 → 프로필 + 등록일 / 멘티 → 수정일만 */}
-        <div className="flex flex-col gap-1">
-          {userRole === 'MENTOR' && (
-            <>
-              <div className="flex items-center gap-3">
-                <UserBadge role="MENTEE" profileUrl={profileUrl} className="w-12 h-12" />
-                <span className="text-sm font-medium">{nickname}</span>
+          <div className="flex justify-between items-start">
+            {/* 왼쪽: 멘토 → 프로필 + 등록일 / 멘티 → 수정일만 */}
+           <div className="flex items-center gap-3">
+              <UserBadge role="MENTEE" profileUrl={profileUrl} className="w-12 h-12" />
+              <div className="flex flex-col">
+                <span className="text-sm font-bold">{nickname}</span>
+                <span className="text-xs text-gray-500">
+                  {userRole === 'MENTOR'
+                    ? `등록일: ${requestDate ? new Date(requestDate).toLocaleString('ko-KR', {
+                        hour12: false,
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      }) : ''}`
+                    : `최종 수정일: ${updatedDate ? new Date(updatedDate).toLocaleString('ko-KR', {
+                        hour12: false,
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      }) : ''}`
+                  }
+                </span>
               </div>
-              <div className="text-xs text-gray-500 ml-14">
-                등록일: {requestDate?.slice(0, 10)}
-              </div>
-            </>
-          )}
-
-          {userRole === 'MENTEE' && (
-            <div className="text-xs text-gray-500">
-              최종 수정일: {updatedDate?.slice(0, 10)}
             </div>
-          )}
-        </div>
+
+
 
         {/* 오른쪽: 상태 뱃지 (모두 공통) */}
         <StatusBadge status={portfolio.status} />

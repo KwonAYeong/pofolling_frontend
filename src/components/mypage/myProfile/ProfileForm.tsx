@@ -5,7 +5,9 @@ import Button from 'components/common/Button';
 import ProfileImageUploader from './ProfileImageUploader';
 import EducationItem from './EducationItem';
 import CareerItem from './CareerItem';
-import { Careers,Education  } from 'types/profile';
+import { Careers, Education } from 'types/profile';
+
+type NicknameStatus = 'initial' | 'invalid' | 'original' | 'checking' | 'valid' | 'duplicated';
 
 interface Props {
   profileFile: File | null;
@@ -28,9 +30,8 @@ interface Props {
   careers: Careers[];
   setCareers: (v: Careers[]) => void;
   onSubmit: () => void;
-  onCheckNickname: () => Promise<void>;
-  isNicknameAvailable: boolean | null;
   isPasswordMatch: boolean | null;
+  nicknameStatus: NicknameStatus;
 }
 
 const ProfileForm = ({
@@ -54,9 +55,8 @@ const ProfileForm = ({
   careers,
   setCareers,
   onSubmit,
-  onCheckNickname,
-  isNicknameAvailable,
   isPasswordMatch,
+  nicknameStatus,
 }: Props) => {
   const handleEducationChange = (index: number, field: keyof Education, value: string) => {
     const updated = [...educations];
@@ -72,8 +72,8 @@ const ProfileForm = ({
 
   const jobTypeOptions = [
     { label: '개발', value: '개발' },
-    { label: '마케팅/광고', value: '마케팅/광고' },
-    { label: '경영/비즈니스', value: '경영/비즈니스' },
+    { label: '마케팅/광고', value: '마케팅_광고' },
+    { label: '경영/비즈니스', value: '경영_비즈니스' },
     { label: '디자인', value: '디자인' },
   ];
 
@@ -96,12 +96,20 @@ const ProfileForm = ({
               onChange={(e) => setNickname(e.target.value)}
               placeholder="예: 감자도리"
             />
-            <Button label="중복 확인" onClick={onCheckNickname} className="whitespace-nowrap"/>
           </div>
-          {isNicknameAvailable === true && (
+          {nicknameStatus === 'invalid' && (
+            <p className="text-red-600 text-sm mt-1">닉네임은 한글/영문/숫자 2~10자 이내여야 합니다.</p>
+          )}
+          {nicknameStatus === 'original' && (
+            <p className="text-gray-500 text-sm mt-1">현재 사용 중인 닉네임입니다.</p>
+          )}
+          {nicknameStatus === 'checking' && (
+            <p className="text-gray-500 text-sm mt-1">중복 확인 중...</p>
+          )}
+          {nicknameStatus === 'valid' && (
             <p className="text-green-600 text-sm mt-1">사용 가능한 닉네임입니다.</p>
           )}
-          {isNicknameAvailable === false && (
+          {nicknameStatus === 'duplicated' && (
             <p className="text-red-600 text-sm mt-1">이미 사용 중인 닉네임입니다.</p>
           )}
         </div>
@@ -126,6 +134,7 @@ const ProfileForm = ({
         {isPasswordMatch === true && password && passwordConfirm && (
           <p className="text-green-600 text-sm">비밀번호가 일치합니다.</p>
         )}
+
         {/* 학력 정보 */}
         <div className="pt-6">
           <h2 className="text-lg font-semibold mb-2">학력 정보</h2>
