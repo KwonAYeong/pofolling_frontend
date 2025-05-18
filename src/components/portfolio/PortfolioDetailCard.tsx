@@ -2,6 +2,8 @@ import UserBadge from '../common/UserBadge';
 import Button from '../common/Button';
 import { UserRole } from 'context/UserContext';
 import type { Portfolio } from 'types/portfolio';
+import StatusBadge from 'components/mypage/myPortfolio/StatusBadge';
+import { formatDateTime } from 'utils/format';
 
 interface Props {
   portfolio: Portfolio;
@@ -11,30 +13,48 @@ interface Props {
   showUserBadge?: boolean;
   showDownload?: boolean;
   downloadId?: number;
+  requestedAt?: string;
+  updatedDate?: string;
   children?: React.ReactNode;
 }
+
 
 const PortfolioDetailCard = ({
   portfolio,
   userRole,
   profileUrl,
   nickname,
-  showUserBadge = true,
   showDownload = true,
   downloadId,
+  requestedAt,
+  updatedDate,
   children,
 }: Props) => {
   if (!portfolio) return <div>포트폴리오 정보가 없습니다.</div>;
 
   return (
     <div className="p-6 max-w-[600px] mx-auto border rounded-xl shadow-sm bg-white space-y-6">
-      {/* 프로필 영역 */}
-      {showUserBadge && userRole && (
-        <div className="flex items-center gap-3">
-          <UserBadge role="MENTEE" profileUrl={profileUrl} className="w-12 h-12" />
-          <span className="text-sm font-medium">{nickname}</span>
-        </div>
-      )}
+      {/* 상단 정보: 프로필 or 수정일 + 상태 */}
+          <div className="flex justify-between items-start">
+            {/* 왼쪽: 멘토 → 프로필 + 등록일 / 멘티 → 수정일만 */}
+           <div className="flex items-center gap-3">
+              <UserBadge role="MENTEE" profileUrl={profileUrl} className="w-12 h-12" />
+              <div className="flex flex-col">
+                <span className="text-sm font-bold">{nickname}</span>
+                <span className="text-xs text-gray-500">
+                  {userRole === 'MENTOR'
+                    ? `등록일: ${requestedAt ? formatDateTime(requestedAt) : ''}`
+                    : `최종 수정일: ${updatedDate ? formatDateTime(updatedDate) : ''}`
+                  }
+                </span>
+              </div>
+            </div>
+
+
+
+        {/* 오른쪽: 상태 뱃지 (모두 공통) */}
+        <StatusBadge status={portfolio.status} />
+      </div>
 
       {/* 제목 */}
       <div className="flex items-start gap-4">

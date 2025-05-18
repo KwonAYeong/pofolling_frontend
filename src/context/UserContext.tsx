@@ -8,7 +8,7 @@ export interface User {
   user_id: number;
   nickname?: string;
   role: UserRole;
-  job_id?: string;
+  jobType?: string;
   portfolios?: Portfolio[];
 }
 

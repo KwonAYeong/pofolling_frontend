@@ -25,7 +25,7 @@ const PostCard = ({
   viewCount,
   liked = false,
   onLike,
-  likeDisabled = true
+  likeDisabled = true,
 }: PostCardProps) => {
   return (
     <div className="p-4 border rounded hover:bg-gray-50 cursor-pointer">

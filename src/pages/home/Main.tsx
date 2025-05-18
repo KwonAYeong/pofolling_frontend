@@ -12,7 +12,7 @@ const MainPage = () => {
     if (user.role === 'MENTOR') {
       navigate('/edit-response'); // 멘토 → 첨삭 요청 리스트
     } else if (user.role === 'MENTEE') {
-      navigate('/edit-requests'); // 멘티 → 포트폴리오 리스트
+      navigate('/edit-request'); // 멘티 → 포트폴리오 리스트
     }
   };
 

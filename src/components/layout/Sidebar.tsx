@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 
-interface MenuItem {
+export interface MenuItem {
   label: string;
   path: string;
 }
