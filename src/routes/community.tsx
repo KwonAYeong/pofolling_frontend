@@ -7,7 +7,7 @@ import CommunityWrite from '../pages/community/CommunityWrite';
 const CommunityRoutes = (
   <>
     <Route path="community" element={<CommunityList />} />
-    <Route path="community/:id" element={<CommunityDetail />} />
+    <Route path="community/:postId" element={<CommunityDetail />} /> {/* ✅ postId로 변경 */}
     <Route path="community/write" element={<CommunityWrite />} />
   </>
 );
