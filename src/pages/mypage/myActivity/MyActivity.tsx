@@ -1,31 +1,53 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'api/axios';
 import PostCard from 'components/community/PostCard';
+import { useUser } from 'context/UserContext';
 
 interface Post {
-  id: number;
+  postId: number;
   title: string;
-  author: string;
+  content: string;
+  nickname: string;
+  profileImage?: string;
   createdAt: string;
+  likeCount: number;
+  viewCount: number;
+  liked?: boolean;
 }
 
 const MyActivity = () => {
+  const { user } = useUser();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'written' | 'liked'>('written');
-  const [posts, setPosts] = useState<Post[]>([]); // 🔥 여기에 타입 명시
+  const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    if (activeTab === 'written') {
-      setPosts([
-        { id: 1, title: '내 글 제목', author: '나', createdAt: '2025-05-01' },
-      ]);
-    } else {
-      setPosts([
-        { id: 2, title: '좋아요한 글 제목', author: '감자', createdAt: '2025-05-02' },
-      ]);
-    }
-  }, [activeTab]);
+    if (!user) return;
+
+    const fetchPosts = async () => {
+      const endpoint =
+        activeTab === 'written'
+          ? `/community/post/myPosts/${user.user_id}`
+          : `/community/post/likedPosts/${user.user_id}`;
+
+      try {
+        const res = await axios.get(endpoint, {
+          params: { page: 0, size: 20, sort: 'createdAt,desc' },
+        });
+        setPosts(res.data?.data?.content ?? []);
+      } catch (err) {
+        console.error('게시글 불러오기 실패:', err);
+        setPosts([]);
+      }
+    };
+
+    fetchPosts();
+  }, [activeTab, user]);
 
   return (
     <div className="max-w-xl mx-auto px-4 py-10">
+      {/* 탭 */}
       <div className="flex justify-center mb-6 space-x-4">
         <button
           onClick={() => setActiveTab('written')}
@@ -45,10 +67,32 @@ const MyActivity = () => {
         </button>
       </div>
 
+      {/* 리스트 */}
       <div className="space-y-4">
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
+        {posts.length === 0 ? (
+          <p className="text-gray-500 text-center text-sm">게시글이 없습니다.</p>
+        ) : (
+          posts.map((post) => (
+            <div
+              key={post.postId}
+              onClick={() => navigate(`/community/${post.postId}`)}
+            >
+              <PostCard
+                postId={post.postId}
+                title={post.title}
+                preview={post.content.slice(0, 100)}
+                writer={post.nickname}
+                writerProfileUrl={post.profileImage ?? '/default-profile.png'}
+                timeAgo={new Date(post.createdAt).toLocaleDateString()}
+                likeCount={post.likeCount}
+                viewCount={post.viewCount}
+                liked={post.liked}
+                onLike={() => {}}
+                likeDisabled={true}
+              />
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
