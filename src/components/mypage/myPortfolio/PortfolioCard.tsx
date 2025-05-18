@@ -1,10 +1,10 @@
 import { Portfolio } from 'types/portfolio';
 import StatusBadge from './StatusBadge';
 import { useNavigate } from 'react-router-dom';
-
+import { formatDateTime } from 'utils/format';
 const PortfolioCard = ({ portfolio }: { portfolio: Portfolio }) => {
   const navigate = useNavigate();
-
+  
   const handleClick = () => {
     navigate(`/mypage/portfolio/detail/${portfolio.portfolioId}`);
   };
@@ -22,7 +22,7 @@ const PortfolioCard = ({ portfolio }: { portfolio: Portfolio }) => {
       {/* 날짜 + 상태 */}
       <div className="flex items-center gap-4 justify-end">
         <span className="text-xs text-gray-500 whitespace-nowrap">
-          {portfolio.updatedAt.split('T')[0]}
+          {formatDateTime(portfolio.updatedAt)}
         </span>
         <StatusBadge status={portfolio.status} />
       </div>

@@ -3,6 +3,7 @@ import Button from '../common/Button';
 import { UserRole } from 'context/UserContext';
 import type { Portfolio } from 'types/portfolio';
 import StatusBadge from 'components/mypage/myPortfolio/StatusBadge';
+import { formatDateTime } from 'utils/format';
 
 interface Props {
   portfolio: Portfolio;
@@ -12,10 +13,11 @@ interface Props {
   showUserBadge?: boolean;
   showDownload?: boolean;
   downloadId?: number;
-  requestDate?: string;
+  requestedAt?: string;
   updatedDate?: string;
   children?: React.ReactNode;
 }
+
 
 const PortfolioDetailCard = ({
   portfolio,
@@ -24,7 +26,7 @@ const PortfolioDetailCard = ({
   nickname,
   showDownload = true,
   downloadId,
-  requestDate,
+  requestedAt,
   updatedDate,
   children,
 }: Props) => {
@@ -41,22 +43,8 @@ const PortfolioDetailCard = ({
                 <span className="text-sm font-bold">{nickname}</span>
                 <span className="text-xs text-gray-500">
                   {userRole === 'MENTOR'
-                    ? `등록일: ${requestDate ? new Date(requestDate).toLocaleString('ko-KR', {
-                        hour12: false,
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }) : ''}`
-                    : `최종 수정일: ${updatedDate ? new Date(updatedDate).toLocaleString('ko-KR', {
-                        hour12: false,
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }) : ''}`
+                    ? `등록일: ${requestedAt ? formatDateTime(requestedAt) : ''}`
+                    : `최종 수정일: ${updatedDate ? formatDateTime(updatedDate) : ''}`
                   }
                 </span>
               </div>

@@ -9,7 +9,7 @@ export interface MentoringRequest {
   role: UserRole;
   jobType: string;
   profileImage?: string;
-  requestDate: string;
+  requestedAt: string;
   status?: 'pending' | 'accepted' | 'in-progress' | 'done';
 
  
@@ -23,7 +23,7 @@ export interface MentoringRequest {
 
 interface MentoringContextType {
   addRequest: (request: MentoringRequest) => Promise<void>;
-  fetchRequests: () => Promise<MentoringRequest[]>;
+  fetchRequest: () => Promise<MentoringRequest[]>;
   acceptRequest?: (id: number) => Promise<void>; 
 }
 
@@ -32,7 +32,7 @@ const MentoringContext = createContext<MentoringContextType | undefined>(undefin
 export const MentoringProvider = ({ children }: { children: React.ReactNode }) => {
   // 1. 서버에 POST로 요청 등록
   const addRequest = async (request: MentoringRequest) => {
-    await axios.post('http://localhost:8080/edit-requests', {
+    await axios.post('http://localhost:8080/edit-request', {
       menteeId: request.menteeId,
       mentorId: 999, 
       portfolioId: request.portfolioId,
@@ -41,13 +41,13 @@ export const MentoringProvider = ({ children }: { children: React.ReactNode }) =
   };
 
   // 2. 서버에서 요청 목록 불러오기
-  const fetchRequests = async (): Promise<MentoringRequest[]> => {
+  const fetchRequest = async (): Promise<MentoringRequest[]> => {
     const res = await axios.get('http://localhost:8080/edit-response?page=0');
     return res.data?.data?.content ?? [];
   };
 
   return (
-    <MentoringContext.Provider value={{ addRequest, fetchRequests }}>
+    <MentoringContext.Provider value={{ addRequest, fetchRequest }}>
       {children}
     </MentoringContext.Provider>
   );

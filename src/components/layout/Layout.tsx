@@ -1,18 +1,27 @@
-// Layout.tsx
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useUser } from '../../context/UserContext';
 import { mypageSidebarMenu } from '../../utils/sidebarMenus';
+import { editSidebarMenu } from '../../utils/editSidebarMenu'; 
 import ChatButton from 'components/common/ChatButton';
+import { MenuItem } from './Sidebar';
 
 const Layout = () => {
   const { pathname } = useLocation();
   const { user } = useUser();
+
   const isMypage = pathname.startsWith('/mypage');
-  const isChatPage = pathname.startsWith('/chat'); // 추가된 부분
-  const sidebarMenu =
-    isMypage && user ? mypageSidebarMenu(user.role) : [];
+  const isEdit = pathname.startsWith('/edit');
+  const isChatPage = pathname.startsWith('/chat');
+
+let sidebarMenu: MenuItem[] = [];
+
+  if (isMypage && user) {
+    sidebarMenu = mypageSidebarMenu(user.role);
+  } else if (isEdit && user?.role === 'MENTEE') {
+    sidebarMenu = editSidebarMenu;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -23,7 +32,7 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
-      {!isChatPage && <ChatButton />} {/* 채팅 페이지에서는 안보이게 조건 추가 */}
+      {!isChatPage && <ChatButton />}
     </div>
   );
 };

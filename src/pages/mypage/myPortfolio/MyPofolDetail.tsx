@@ -79,7 +79,7 @@ const MyPofolDetail = () => {
         userRole={user?.role}
         showUserBadge={false}
         nickname={portfolio.nickname}
-        requestDate={portfolio.createdAt}
+        requestedAt={portfolio.createdAt}
         updatedDate={portfolio.updatedAt}
         downloadId={portfolio.portfolioId}
       >
