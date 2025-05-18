@@ -153,6 +153,7 @@ useEffect(() => {
     const mappedCareers = careers.map((car, idx) => ({
       careerId: idx,
       companyName: car.companyName,
+      department: car.department,
       position: car.position,
       startedAt: car.startedAt,
       endedAt: car.endedAt,

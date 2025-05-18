@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import RequestCard from 'components/edit/RequestCard';
 import Pagination from 'components/common/Pagination';
+import { formatDateTime } from 'utils/format';
 
 interface RequestItem {
   editRequestId: number;
@@ -52,7 +53,7 @@ const Response = () => {
             title={item.title}
             nickname={item.nickname}
             profileUrl={item.profileImage}
-            requestDate={item.requestedAt?.slice(0, 10) || '날짜 없음'}
+            requestedAt={formatDateTime(item.requestedAt)}
             jobType={item.jobType}
           />
         ))}

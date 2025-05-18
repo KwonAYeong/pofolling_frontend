@@ -15,7 +15,7 @@ const Header = () => {
       alert('로그인이 필요합니다.');
       navigate('/login');
     } else if (role === 'MENTEE') {
-      navigate('/edit-requests');
+      navigate('/edit-request');
     } else if (role === 'MENTOR') {
       navigate('/edit-response'); // 멘토용 페이지 경로
     }

@@ -1,6 +1,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import UserBadge from 'components/common/UserBadge';
+import { formatDateTime } from 'utils/format';
 
 interface RequestCardProps {
   id: number;
@@ -8,7 +9,7 @@ interface RequestCardProps {
   jobType: string;
   profileUrl?: string;
   title: string;
-  requestDate: string;
+  requestedAt: string;
 }
 
 const RequestCard = ({
@@ -17,7 +18,7 @@ const RequestCard = ({
   jobType,
   profileUrl,
   title,
-  requestDate,
+  requestedAt,
 }: RequestCardProps) => {
   const navigate = useNavigate();
 
@@ -39,7 +40,7 @@ const RequestCard = ({
   <div className="text-lg font-medium truncate">{title}</div>
 
   {/* 오른쪽: 날짜 */}
-  <div className="text-sm text-gray-500 whitespace-nowrap text-right">{requestDate}</div>
+  <div className="text-sm text-gray-500 whitespace-nowrap text-right"><span>{formatDateTime(requestedAt)}</span></div>
 </div>
   );
 };
