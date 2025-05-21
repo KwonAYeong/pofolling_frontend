@@ -35,8 +35,9 @@ const CommunityWrite = () => {
   }, [editMode, postId, userId]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(e.target.files);
+    const selectedFiles = e.target.files;
+    if (selectedFiles) {
+      setFiles(selectedFiles);
     }
   };
 

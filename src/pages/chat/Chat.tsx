@@ -1,3 +1,4 @@
+// Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useUser } from 'context/UserContext';
@@ -39,6 +40,10 @@ export default function Chat() {
           const isSender = chat.senderId === user.user_id;
           const role: 'MENTOR' | 'MENTEE' = user.role === 'MENTEE' ? 'MENTOR' : 'MENTEE';
 
+          const lastMsg = chat.isActive
+            ? chat.lastMessage || '재첨삭이 시작되었습니다'
+            : '첨삭이 종료된 채팅방입니다.';
+
           return {
             id: chat.chatRoomId,
             name: isSender ? chat.receiverNickname : chat.senderNickname,
@@ -50,7 +55,7 @@ export default function Chat() {
             portfolioIds: chat.portfolioIds || [],
             role,
             isActive: chat.isActive,
-            lastMessage: chat.isActive ? chat.lastMessage || '' : '첨삭이 종료된 채팅방입니다.',
+            lastMessage: lastMsg,
             hasNewMessage: chat.hasNewMessage || false,
           };
         });
@@ -92,13 +97,37 @@ export default function Chat() {
           profile: msg.senderId === user?.user_id ? null : msg.senderProfileImage,
         }));
 
+        if (chatRoom.isActive) {
+          const hasReopen = formatted.some((m: any) => m.message === '재첨삭이 시작되었습니다');
+          if (!hasReopen) {
+            const reopenMessage = {
+              sender: '시스템',
+              message: '재첨삭이 시작되었습니다',
+              time: '',
+              profile: null,
+            };
+
+            const endIndex = formatted.findIndex((m: any) => m.message === '첨삭이 종료되었습니다');
+            if (endIndex !== -1) {
+              formatted.splice(endIndex, 0, reopenMessage);
+            } else {
+              formatted.push(reopenMessage);
+            }
+          }
+        }
+
         if (!chatRoom.isActive && !formatted.some((m: any) => m.message === '첨삭이 종료되었습니다')) {
           formatted.push({ sender: '시스템', message: '첨삭이 종료되었습니다', time: '', profile: null });
         }
 
         const updated = chatList.map((chat) =>
           chat.id === selectedChatId
-            ? { ...chat, messages: formatted, hasNewMessage: false, lastMessage: formatted.at(-1)?.message || '' }
+            ? {
+                ...chat,
+                messages: formatted,
+                hasNewMessage: false,
+                lastMessage: formatted.at(-1)?.message || '',
+              }
             : chat
         );
 
