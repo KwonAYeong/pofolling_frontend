@@ -14,7 +14,7 @@ interface Props {
   showDownload?: boolean;
   downloadId?: number;
   requestedAt?: string;
-  updatedDate?: string;
+  updatedAt?: string;
   children?: React.ReactNode;
 }
 
@@ -27,7 +27,7 @@ const PortfolioDetailCard = ({
   showDownload = true,
   downloadId,
   requestedAt,
-  updatedDate,
+  updatedAt,
   children,
 }: Props) => {
   if (!portfolio) return <div>포트폴리오 정보가 없습니다.</div>;
@@ -43,8 +43,8 @@ const PortfolioDetailCard = ({
                 <span className="text-sm font-bold">{nickname}</span>
                 <span className="text-xs text-gray-500">
                   {userRole === 'MENTOR'
-                    ? `등록일: ${requestedAt ? formatDateTime(requestedAt) : ''}`
-                    : `최종 수정일: ${updatedDate ? formatDateTime(updatedDate) : ''}`
+                    ? `등록일: ${portfolio.requestedAt ? formatDateTime(portfolio.requestedAt) : ''}`
+                    : `최종 수정일: ${portfolio.updatedAt ? formatDateTime(portfolio.updatedAt) : ''}`
                   }
                 </span>
               </div>

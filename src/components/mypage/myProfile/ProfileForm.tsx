@@ -10,8 +10,8 @@ import { Careers, Education } from 'types/profile';
 type NicknameStatus = 'initial' | 'invalid' | 'original' | 'checking' | 'valid' | 'duplicated';
 
 interface Props {
-  profileFile: File | null;
-  setProfileFile: (file: File | null) => void;
+  profileImageUrl: string | null;
+  setProfileImageUrl: (url: string | null) => void;
   name: string;
   setName: (v: string) => void;
   nickname: string;
@@ -35,8 +35,8 @@ interface Props {
 }
 
 const ProfileForm = ({
-  profileFile,
-  setProfileFile,
+  profileImageUrl,
+  setProfileImageUrl,
   name,
   setName,
   nickname,
@@ -81,7 +81,7 @@ const ProfileForm = ({
     <div className="max-w-xl mx-auto px-6 py-8 text-base">
       <h1 className="text-2xl font-bold mb-6">프로필 수정</h1>
 
-      <ProfileImageUploader profileFile={profileFile} setProfileFile={setProfileFile} />
+      <ProfileImageUploader profileImageUrl={profileImageUrl} setProfileImageUrl={setProfileImageUrl} />
 
       <div className="space-y-4">
         <LabeledInput label="이메일" value={email} onChange={() => {}} readOnly />
