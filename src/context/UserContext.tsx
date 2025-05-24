@@ -5,6 +5,7 @@ import { Portfolio } from 'types/portfolio';
 export type UserRole = 'MENTEE' | 'MENTOR';
 
 export interface User {
+  profileImage?: string | undefined;
   user_id: number;
   nickname?: string;
   role: UserRole;

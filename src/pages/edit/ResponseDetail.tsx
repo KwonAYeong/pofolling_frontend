@@ -60,23 +60,23 @@ if (!request || !request.portfolioId) {
     
     <div className="p-6 max-w-[600px] mx-auto space-y-6">
       <PortfolioDetailCard
-  portfolio={{
-    nickname: request.nickname,
-    portfolioId: request.portfolioId,
-    title: request.title,
-    content: request.content,
-    createdAt: request.updatedAt,
-    updatedAt: request.updatedAt,
-    fileUrl: request.fileUrl ?? '',
-    userId: request.menteeId,
-    status: 'REQUESTED',
- 
-  }}
-  userRole={user?.role}
-  profileUrl={request.profileImage}
-  downloadId={request.portfolioId}
-  nickname = {request.nickname}
->
+        portfolio={{
+          nickname: request.nickname,
+          portfolioId: request.portfolioId,
+          title: request.title,
+          content: request.content,
+          requestedAt:request.requestedAt,
+          updatedAt: request.updatedAt,
+          fileUrl: request.fileUrl ?? '',
+          userId: request.menteeId,
+          status: 'REQUESTED',
+      
+        }}
+        userRole={user?.role}
+        profileUrl={request.profileImage}
+        downloadId={request.portfolioId}
+        nickname = {request.nickname}
+      >
   </PortfolioDetailCard>
       <div className="flex justify-end">
         <Button label="첨삭 수락" variant='primary' onClick={handleAccept} />

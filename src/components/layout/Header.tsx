@@ -58,7 +58,7 @@ const Header = () => {
             >
               <UserBadge
                 role={user.role}
-                profileUrl="/profileEX.png"
+                profileUrl={user.profileImage}
                 className="w-8 h-8"
                 hoverEffect
               />

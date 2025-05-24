@@ -79,8 +79,8 @@ const MyPofolDetail = () => {
         userRole={user?.role}
         showUserBadge={false}
         nickname={portfolio.nickname}
-        requestedAt={portfolio.createdAt}
-        updatedDate={portfolio.updatedAt}
+        requestedAt={portfolio.requestedAt}
+        updatedAt={portfolio.updatedAt}
         downloadId={portfolio.portfolioId}
       >
       <div className="flex gap-2">
