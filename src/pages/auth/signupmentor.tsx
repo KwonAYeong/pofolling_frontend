@@ -1,5 +1,5 @@
 import React from 'react';
-import RegisterForm from '../../components/mypage/RegisterForms';
+import RegisterForm from '../../components/Register/RegisterForms';
 
 export default function SignupMentor() {
   return (
