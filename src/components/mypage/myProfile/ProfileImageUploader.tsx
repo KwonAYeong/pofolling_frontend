@@ -1,42 +1,27 @@
-import { useRef, useState } from 'react';
-import axios from 'axios';
+import { useRef, useState, useEffect } from 'react';
 
 interface Props {
   profileImageUrl: string | null;
-  setProfileImageUrl: (url: string | null) => void;
+  setSelectedFile: (file: File | null) => void;
 }
 
-const ProfileImageUploader = ({ profileImageUrl, setProfileImageUrl }: Props) => {
+const ProfileImageUploader = ({ profileImageUrl, setSelectedFile }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(profileImageUrl);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPreviewUrl(profileImageUrl);
+  }, [profileImageUrl]);
 
   const handleImageClick = () => fileInputRef.current?.click();
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await axios.post<{ imageUrl: string }>(
-        'http://localhost:8080/upload/profile-image',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
-      const imageUrl = res.data.imageUrl;
-      setProfileImageUrl(imageUrl);
-      setPreviewUrl(imageUrl);
-    } catch (err) {
-      console.error('이미지 업로드 실패:', err);
-      alert('이미지 업로드에 실패했습니다.');
-    }
+    const preview = URL.createObjectURL(file);
+    setPreviewUrl(preview);
+    setSelectedFile(file); // ✅ 부모 컴포넌트가 저장 시 처리
   };
 
   return (

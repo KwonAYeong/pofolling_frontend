@@ -12,7 +12,9 @@ const ProfileUpdate = () => {
   const { user: loggedInUser } = useUser();
 
   const [originalNickname, setOriginalNickname] = useState('');
-  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null); // ✅ string으로 관리
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
@@ -27,7 +29,6 @@ const ProfileUpdate = () => {
 
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // 비밀번호 일치 여부 확인
   useEffect(() => {
     if (!password && !passwordConfirm) {
       setIsPasswordMatch(null);
@@ -36,7 +37,6 @@ const ProfileUpdate = () => {
     setIsPasswordMatch(password === passwordConfirm);
   }, [password, passwordConfirm]);
 
-  // 유저 정보 불러오기
   useEffect(() => {
     const fetchUser = async () => {
       if (!loggedInUser) return;
@@ -61,7 +61,6 @@ const ProfileUpdate = () => {
     fetchUser();
   }, [loggedInUser]);
 
-  // 닉네임 자동 중복 확인
   useEffect(() => {
     const trimmed = nickname.trim();
     if (!trimmed) {
@@ -127,6 +126,27 @@ const ProfileUpdate = () => {
       }
     }
 
+    let finalImageUrl = profileImageUrl;
+
+    // 1단계: 이미지 S3 업로드 → URL 받기
+    if (selectedFile) {
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        const res = await axios.patch(
+          `/mypage/profile/${loggedInUser.user_id}/image`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        finalImageUrl = res.data.imageUrl;
+      } catch (err) {
+        console.error('이미지 업로드 실패:', err);
+        alert('이미지 업로드 중 오류가 발생했습니다.');
+        return;
+      }
+    }
+
+    // 2단계: 나머지 정보 업데이트
     const mappedEducations = educations.map((edu, idx) => ({
       educationId: idx,
       schoolName: edu.schoolName,
@@ -153,15 +173,13 @@ const ProfileUpdate = () => {
       phoneNumber,
       jobType,
       password: password || null,
-      profileImage: profileImageUrl ?? null, 
+      profileImage: finalImageUrl,
       educations: mappedEducations,
       careers: mappedCareers,
     };
 
     try {
-      await axios.patch(`/mypage/profile/${loggedInUser.user_id}`, payload, {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      await axios.patch(`/mypage/profile/${loggedInUser.user_id}`, payload);
       alert('프로필이 성공적으로 수정되었습니다.');
       navigate(`/mypage`);
     } catch (error) {
@@ -173,7 +191,7 @@ const ProfileUpdate = () => {
   return (
     <ProfileForm
       profileImageUrl={profileImageUrl}
-      setProfileImageUrl={setProfileImageUrl}
+      setSelectedFile={setSelectedFile}
       name={name}
       setName={setName}
       nickname={nickname}

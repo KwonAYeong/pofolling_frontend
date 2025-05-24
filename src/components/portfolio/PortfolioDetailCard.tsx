@@ -78,9 +78,20 @@ const PortfolioDetailCard = ({
           <label className="w-16 text-sm font-medium">파일다운</label>
           <Button
             label="다운로드"
-            onClick={() => window.open(`/portfolio/file/${downloadId}`, '_blank')}
+            onClick={() => {
+              const fileUrl = portfolio.fileUrl; 
+              const link = document.createElement('a');
+              link.href = fileUrl;
+              link.download = ''; 
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
             variant="secondary"
           />
+
+
+
         </div>
       )}
 

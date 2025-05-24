@@ -13,6 +13,7 @@ const MyPortfolioUpdate = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [existingFileUrl, setExistingFileUrl] = useState<string>('');
 
   useEffect(() => {
     if (!id || !user) return;
@@ -24,6 +25,7 @@ const MyPortfolioUpdate = () => {
         setPortfolio(data);
         setTitle(data.title);
         setContent(data.content);
+        setExistingFileUrl(data.fileUrl);
       })
       .catch((err) => {
         console.error('포트폴리오 불러오기 실패:', err);
@@ -31,28 +33,38 @@ const MyPortfolioUpdate = () => {
         navigate('/mypage/portfolio');
       });
   }, [id, user, navigate]);
-
-  const handleUpdate = async () => {
+const handleUpdate = async () => {
   if (!title.trim() || !content.trim()) {
     alert('제목과 내용을 입력해주세요.');
     return;
   }
 
+  const dto = {
+    title,
+    content,
+    fileUrl: existingFileUrl,
+  };
+
+  const formData = new FormData();
+  formData.append("data", new Blob([JSON.stringify(dto)], { type: "application/json" }));
+  if (file) {
+    formData.append("file", file);
+  }
+
   try {
-    await axios.patch(`http://localhost:8080/mypage/portfolio/${id}`, {
-      title,
-      content,
-      fileUrl: null, // 기존 URL 유지할 거면 그대로 넣어줘도 됨
+    await axios.patch(`http://localhost:8080/mypage/portfolio/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     });
 
-    alert('포트폴리오가 수정되었습니다.');
-    navigate(`/mypage/portfolio/detail/${id}`); 
+    alert("포트폴리오가 수정되었습니다.");
+    navigate(`/mypage/portfolio/detail/${id}`);
   } catch (err) {
-    console.error('수정 실패:', err);
-    alert('수정 중 오류가 발생했습니다.');
+    console.error("수정 실패:", err);
+    alert("수정 중 오류가 발생했습니다.");
   }
 };
-
 
   if (!portfolio) return <div className="text-center py-10">로딩 중...</div>;
 
@@ -60,7 +72,7 @@ const MyPortfolioUpdate = () => {
     <PortfolioForm
       title={title}
       content={content}
-      fileName={file?.name}
+      fileName={file?.name || existingFileUrl?.split('/').pop()}
       onTitleChange={setTitle}
       onContentChange={setContent}
       onFileChange={setFile}
