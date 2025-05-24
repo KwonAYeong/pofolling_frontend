@@ -11,6 +11,8 @@ const CommunityWrite = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [files, setFiles] = useState<FileList | null>(null);
+  const [existingFiles, setExistingFiles] = useState<string[]>([]);
+  const [deletedFiles, setDeletedFiles] = useState<string[]>([]);
 
   const { user } = useUser();
   const userId = user?.user_id;
@@ -24,6 +26,7 @@ const CommunityWrite = () => {
           const post = res.data.data;
           setTitle(post.title);
           setContent(post.content);
+          setExistingFiles(post.fileUrls || []);
         } catch (err) {
           console.error('수정할 게시글 불러오기 실패', err);
           alert('게시글을 불러올 수 없습니다.');
@@ -41,6 +44,11 @@ const CommunityWrite = () => {
     }
   };
 
+  const handleDeleteExistingFile = (fileUrl: string) => {
+    setExistingFiles((prev) => prev.filter((url) => url !== fileUrl));
+    setDeletedFiles((prev) => [...prev, fileUrl]);
+  };
+
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
       alert('제목과 내용을 모두 입력하세요.');
@@ -54,8 +62,6 @@ const CommunityWrite = () => {
 
     try {
       const formData = new FormData();
-      formData.append('title', title);
-      formData.append('content', content);
 
       if (files) {
         Array.from(files).forEach((file) => {
@@ -64,31 +70,41 @@ const CommunityWrite = () => {
       }
 
       if (editMode && postId) {
-        formData.append('data', new Blob([JSON.stringify({ title, content })], { type: 'application/json' }));
+        const json = JSON.stringify({
+          title,
+          content,
+          deleteFileUrls: deletedFiles,
+        });
+        const jsonBlob = new Blob([json], { type: 'application/json' });
+        formData.append('data', jsonBlob);
 
         await axios.patch(
           `http://localhost:8080/community/post/${postId}/${userId}`,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }
+          formData
         );
         alert('게시글이 수정되었습니다.');
       } else {
-        await axios.post(`http://localhost:8080/community/post/${userId}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        formData.append('title', title);
+        formData.append('content', content);
+
+        await axios.post(`http://localhost:8080/community/post/${userId}`, formData);
         alert('게시글이 등록되었습니다.');
       }
 
       navigate('/community');
-    } catch (err) {
-      console.error('글 저장 실패', err);
+    } catch (err: any) {
+      console.error('글 저장 실패', err.response || err.message || err);
       alert('글 저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  // ✅ URL에서 이미지 확장자 판별 함수
+  const isImage = (url: string): boolean => {
+    try {
+      const decodedUrl = decodeURIComponent(url);
+      return /\.(jpg|jpeg|png|gif|bmp|webp)(\?.*)?$/i.test(decodedUrl);
+    } catch {
+      return false;
     }
   };
 
@@ -114,6 +130,50 @@ const CommunityWrite = () => {
         value={content}
         onChange={(e) => setContent(e.target.value)}
       />
+
+      {/* 기존 파일 목록 */}
+      {editMode && existingFiles.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-sm text-gray-700 font-semibold">기존 첨부파일:</p>
+          {existingFiles.map((fileUrl) => {
+            const fileName = decodeURIComponent(fileUrl.split('/').pop() || '');
+            const isImageFile = isImage(fileUrl);
+
+            return (
+              <div
+                key={fileUrl}
+                className="flex items-center justify-between border px-3 py-2 rounded text-sm text-gray-700"
+              >
+                {isImageFile ? (
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {fileName}
+                  </a>
+                ) : (
+                  <a
+                    href={fileUrl}
+                    download
+                    className="text-blue-600 hover:underline"
+                  >
+                    {fileName} (다운로드)
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleDeleteExistingFile(fileUrl)}
+                  className="text-red-500 hover:underline text-xs"
+                >
+                  삭제
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <input
         type="file"

@@ -1,58 +1,76 @@
 import React from 'react';
 
-interface PostEditorProps {
+interface PostDetailProps {
   title: string;
   content: string;
-  onChangeTitle: (value: string) => void;
-  onChangeContent: (value: string) => void;
-  onSubmit: () => void;
-  isEditMode?: boolean; // 수정 모드 여부
+  nickname: string;
+  createdAt: string;
+  profileImage?: string | null;
+  fileUrls?: string[];
 }
 
-const PostEditor = ({
+const PostDetail = ({
   title,
   content,
-  onChangeTitle,
-  onChangeContent,
-  onSubmit,
-  isEditMode = false,
-}: PostEditorProps) => {
+  nickname,
+  createdAt,
+  profileImage,
+  fileUrls = [],
+}: PostDetailProps) => {
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <h2 className="text-2xl font-bold">
-        {isEditMode ? '글 수정하기' : '글 작성하기'}
-      </h2>
+      <h1 className="text-3xl font-bold">{title}</h1>
 
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => onChangeTitle(e.target.value)}
-        placeholder="제목을 입력하세요"
-        className="w-full px-4 py-2 border rounded text-lg"
-      />
-
-      <textarea
-        value={content}
-        onChange={(e) => onChangeContent(e.target.value)}
-        placeholder="내용을 입력하세요"
-        className="w-full h-64 px-4 py-2 border rounded resize-none"
-      />
-
-      <div className="text-right">
-        <button
-          onClick={() => {
-            onSubmit();
-            if (!isEditMode) {
-              alert('글이 등록하였습니다.');
-            }
-          }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
-        >
-          {isEditMode ? '수정 완료' : '등록.'}
-        </button>
+      <div className="flex items-center space-x-2 text-sm text-gray-600">
+        {profileImage && (
+          <img
+            src={profileImage}
+            alt="프로필 이미지"
+            className="w-6 h-6 rounded-full"
+          />
+        )}
+        <span>{nickname}</span>
+        <span>·</span>
+        <span>{new Date(createdAt).toLocaleString('ko-KR')}</span>
       </div>
+
+      <hr />
+
+      <p className="whitespace-pre-wrap">{content}</p>
+
+      {/* ✅ 첨부파일 처리 */}
+      {fileUrls.length > 0 && (
+        <div className="space-y-2">
+          <p className="font-semibold text-gray-700">첨부파일:</p>
+          {fileUrls.map((fileUrl, index) => {
+            const fileName = fileUrl.split('/').pop() || '';
+            const extension = fileName.split('.').pop()?.toLowerCase() || '';
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
+
+            return (
+              <div key={index}>
+                {isImage ? (
+                  <img
+                    src={fileUrl}
+                    alt={`첨부이미지-${index}`}
+                    className="max-w-xs border rounded"
+                  />
+                ) : (
+                  <a
+                    href={fileUrl}
+                    download
+                    className="text-blue-600 hover:underline"
+                  >
+                    {fileName} (다운로드)
+                  </a>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
 
-export default PostEditor;
+export default PostDetail;

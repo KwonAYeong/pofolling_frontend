@@ -23,11 +23,11 @@ const CommunityList = () => {
     const fetchPosts = async () => {
       try {
         const res = await axios.get('http://localhost:8080/community/post');
-        const content: Post[] = res.data.data.content;
+        const content = res.data.data.content;
 
-        // ✅ 최신순 정렬 (최근 글이 위로)
+        // 최신순 정렬 (createdAt 기준 내림차순)
         const sorted = content.sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          (a: Post, b: Post) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
         setPosts(sorted);
