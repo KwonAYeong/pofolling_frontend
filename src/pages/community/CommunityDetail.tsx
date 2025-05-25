@@ -54,36 +54,37 @@ const CommunityDetail = () => {
     }
   };
 
-  const handleLike = async () => {
-    if (!userId || !postId) return;
+  useEffect(() => {
+    fetchPost();
+  }, [postId, userId]);
 
+  if (!userId) return <div className="p-4 text-center text-red-500">로그인이 필요합니다.</div>;
+  if (loading) return <div className="p-4 text-center text-gray-500">로딩 중...</div>;
+  if (!post) return <div className="p-4 text-center text-red-500">게시글을 불러올 수 없습니다.</div>;
+
+  const handleLike = async () => {
     try {
       const res = await axios.post(`http://localhost:8080/community/post/${postId}/like/${userId}`);
       const { likeCount, liked } = res.data.data;
       setPost((prev) => prev ? { ...prev, likeCount, liked } : prev);
-    } catch (err) {
-      console.error('좋아요 실패', err);
+    } catch {
       alert('좋아요 처리 중 오류 발생');
     }
   };
 
   const handleDeletePost = async () => {
     if (!window.confirm('정말 게시글을 삭제하시겠습니까?')) return;
-    if (!userId || !postId) return;
-
     try {
       await axios.delete(`http://localhost:8080/community/post/${postId}/${userId}`);
       alert('삭제되었습니다.');
       navigate('/community');
-    } catch (err) {
-      console.error('삭제 실패', err);
+    } catch {
       alert('삭제에 실패했습니다.');
     }
   };
 
   const handleReplySubmit = async () => {
     if (!replyContent.trim()) return;
-    if (!userId || !postId) return;
 
     try {
       await axios.post(
@@ -92,19 +93,16 @@ const CommunityDetail = () => {
       );
       setReplyContent('');
       fetchPost();
-    } catch (err) {
+    } catch {
       alert('댓글 등록 실패');
     }
   };
 
   const handleReplyEdit = async (replyId: number) => {
-    if (!userId) return;
-
     try {
       await axios.patch(
         `http://localhost:8080/community/post/reply/${replyId}?userId=${userId}`,
-        { content: editingContent },
-        { headers: { 'Content-Type': 'application/json' } }
+        { content: editingContent }
       );
       setEditingReplyId(null);
       setEditingContent('');
@@ -116,8 +114,6 @@ const CommunityDetail = () => {
 
   const handleReplyDelete = async (replyId: number) => {
     if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
-    if (!userId) return;
-
     try {
       await axios.delete(`http://localhost:8080/community/post/reply/${replyId}?userId=${userId}`);
       fetchPost();
@@ -125,22 +121,6 @@ const CommunityDetail = () => {
       alert('댓글 삭제 실패');
     }
   };
-
-  useEffect(() => {
-    fetchPost();
-  }, [postId, userId]);
-
-  if (!userId) {
-    return <div className="p-4 text-center text-red-500">로그인이 필요합니다.</div>;
-  }
-
-  if (loading) {
-    return <div className="p-4 text-center text-gray-500">로딩 중...</div>;
-  }
-
-  if (!post) {
-    return <div className="p-4 text-center text-red-500">게시글을 불러올 수 없습니다.</div>;
-  }
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
@@ -175,9 +155,26 @@ const CommunityDetail = () => {
 
       {post.fileUrls?.length > 0 && (
         <div className="mt-4 space-y-2">
-          {post.fileUrls.map((url, idx) => (
-            <img key={idx} src={url} alt={`첨부이미지-${idx}`} className="w-full rounded" />
-          ))}
+          {post.fileUrls.map((url, idx) => {
+            const fileName = decodeURIComponent(url.split('/').pop() || '');
+            const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
+
+            return (
+              <div key={idx}>
+                {isImage ? (
+                  <img src={url} alt={`첨부이미지-${idx}`} className="w-full rounded" />
+                ) : (
+                  <a
+                    href={url}
+                    download
+                    className="text-blue-600 underline text-sm"
+                  >
+                    📎 {fileName} (다운로드)
+                  </a>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
