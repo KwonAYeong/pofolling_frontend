@@ -1,3 +1,4 @@
+// CommunityWrite.tsx
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -73,7 +74,7 @@ const CommunityWrite = () => {
         const json = JSON.stringify({
           title,
           content,
-          deleteFileUrls: deletedFiles,
+          deleteFileUrls: deletedFiles
         });
         const jsonBlob = new Blob([json], { type: 'application/json' });
         formData.append('data', jsonBlob);
@@ -98,11 +99,10 @@ const CommunityWrite = () => {
     }
   };
 
-  // ✅ URL에서 이미지 확장자 판별 함수
   const isImage = (url: string): boolean => {
     try {
       const decodedUrl = decodeURIComponent(url);
-      return /\.(jpg|jpeg|png|gif|bmp|webp)(\?.*)?$/i.test(decodedUrl);
+      return /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(decodedUrl);
     } catch {
       return false;
     }
@@ -131,41 +131,26 @@ const CommunityWrite = () => {
         onChange={(e) => setContent(e.target.value)}
       />
 
-      {/* 기존 파일 목록 */}
       {editMode && existingFiles.length > 0 && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <p className="text-sm text-gray-700 font-semibold">기존 첨부파일:</p>
           {existingFiles.map((fileUrl) => {
             const fileName = decodeURIComponent(fileUrl.split('/').pop() || '');
             const isImageFile = isImage(fileUrl);
 
             return (
-              <div
-                key={fileUrl}
-                className="flex items-center justify-between border px-3 py-2 rounded text-sm text-gray-700"
-              >
+              <div key={fileUrl} className="flex flex-col border p-2 rounded text-sm">
                 {isImageFile ? (
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    {fileName}
-                  </a>
+                  <img src={fileUrl} alt={fileName} className="max-w-xs mb-1" />
                 ) : (
-                  <a
-                    href={fileUrl}
-                    download
-                    className="text-blue-600 hover:underline"
-                  >
-                    {fileName} (다운로드)
+                  <a href={fileUrl} download className="text-blue-600 hover:underline">
+                    📎 {fileName} (다운로드)
                   </a>
                 )}
                 <button
                   type="button"
                   onClick={() => handleDeleteExistingFile(fileUrl)}
-                  className="text-red-500 hover:underline text-xs"
+                  className="text-red-500 hover:underline text-xs text-right mt-1"
                 >
                   삭제
                 </button>
