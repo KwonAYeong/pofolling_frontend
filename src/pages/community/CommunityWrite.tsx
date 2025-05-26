@@ -17,7 +17,7 @@ const CommunityWrite = () => {
   const [file2Name, setFile2Name] = useState('');
   const [file3Name, setFile3Name] = useState('');
   const [existingFiles, setExistingFiles] = useState<string[]>([]);
-  const [deletedFiles, setDeletedFiles] = useState<string[]>([]);
+  const [deleteFileUrls, setdeleteFileUrls] = useState<string[]>([]);
 
   const { user } = useUser();
   const userId = user?.user_id;
@@ -67,17 +67,17 @@ const CommunityWrite = () => {
 
   const handleDeleteFile = (index: number) => {
     if (index === 1) {
-      if (existingFiles[0]) setDeletedFiles(prev => [...prev, existingFiles[0]]);
+      if (existingFiles[0]) setdeleteFileUrls(prev => [...prev, existingFiles[0]]);
       setFile1(null);
       setFile1Name('');
     }
     if (index === 2) {
-      if (existingFiles[1]) setDeletedFiles(prev => [...prev, existingFiles[1]]);
+      if (existingFiles[1]) setdeleteFileUrls(prev => [...prev, existingFiles[1]]);
       setFile2(null);
       setFile2Name('');
     }
     if (index === 3) {
-      if (existingFiles[2]) setDeletedFiles(prev => [...prev, existingFiles[2]]);
+      if (existingFiles[2]) setdeleteFileUrls(prev => [...prev, existingFiles[2]]);
       setFile3(null);
       setFile3Name('');
     }
@@ -91,39 +91,52 @@ const CommunityWrite = () => {
   };
 
   const handleSubmit = async () => {
-    if (!userId) return;
+  if (!userId) return;
 
-    const formData = new FormData();
+  const formData = new FormData();
+
+  if (editMode) {
+    // 수정 모드일 때는 JSON으로 묶어서 'data'로 보냄
+    const data = { title, content, deleteFileUrls };
+    formData.append(
+      'data',
+      new Blob([JSON.stringify(data)], { type: 'application/json' })
+    );
+  } else {
+    // 등록 모드일 때는 각각 따로 보냄
     formData.append('title', title);
     formData.append('content', content);
-    if (file1) formData.append('files', file1);
-    if (file2) formData.append('files', file2);
-    if (file3) formData.append('files', file3);
-    formData.append('deletedFiles', JSON.stringify(deletedFiles));
+    formData.append('deleteFileUrls', JSON.stringify(deleteFileUrls));
+  }
 
-    try {
-      if (editMode && postId) {
-        await axios.put(
-          `http://localhost:8080/community/post/${postId}/${userId}`,
-          formData,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
-        );
-        alert('게시글이 수정되었습니다.');
-      } else {
-        await axios.post(
-          `http://localhost:8080/community/post/${userId}`,
-          formData,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
-        );
-        alert('게시글이 등록되었습니다.');
-      }
+  if (file1) formData.append('files', file1);
+  if (file2) formData.append('files', file2);
+  if (file3) formData.append('files', file3);
 
-      navigate('/community');
-    } catch (err) {
-      console.error('글 등록/수정 실패:', err);
-      alert('글 처리 중 오류가 발생했습니다.');
+  try {
+    if (editMode && postId) {
+      await axios.patch(
+        `http://localhost:8080/community/post/${postId}/${userId}`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      alert('게시글이 수정되었습니다.');
+    } else {
+      await axios.post(
+        `http://localhost:8080/community/post/${userId}`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      alert('게시글이 등록되었습니다.');
     }
-  };
+
+    navigate('/community');
+  } catch (err) {
+    console.error('글 등록/수정 실패:', err);
+    alert('글 처리 중 오류가 발생했습니다.');
+  }
+};
+
 
   return (
     <div className="max-w-3xl mx-auto p-6">
