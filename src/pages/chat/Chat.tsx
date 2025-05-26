@@ -1,4 +1,3 @@
-// Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useUser } from 'context/UserContext';
@@ -11,6 +10,7 @@ interface ChatItem {
   messages: any[];
   chatRoomId: number;
   portfolioIds: number[];
+  portfolioTitles?: string[];
   role: 'MENTOR' | 'MENTEE';
   isActive: boolean;
   lastMessage: string;
@@ -40,10 +40,6 @@ export default function Chat() {
           const isSender = chat.senderId === user.user_id;
           const role: 'MENTOR' | 'MENTEE' = user.role === 'MENTEE' ? 'MENTOR' : 'MENTEE';
 
-          const lastMsg = chat.isActive
-            ? chat.lastMessage || '재첨삭이 시작되었습니다'
-            : '첨삭이 종료된 채팅방입니다.';
-
           return {
             id: chat.chatRoomId,
             name: isSender ? chat.receiverNickname : chat.senderNickname,
@@ -53,9 +49,10 @@ export default function Chat() {
             messages: [],
             chatRoomId: chat.chatRoomId,
             portfolioIds: chat.portfolioIds || [],
+            portfolioTitles: chat.portfolioTitles || [],
             role,
             isActive: chat.isActive,
-            lastMessage: lastMsg,
+            lastMessage: chat.isActive ? chat.lastMessage || '' : '첨삭이 종료된 채팅방입니다.',
             hasNewMessage: chat.hasNewMessage || false,
           };
         });
@@ -97,23 +94,11 @@ export default function Chat() {
           profile: msg.senderId === user?.user_id ? null : msg.senderProfileImage,
         }));
 
-        if (chatRoom.isActive) {
-          const hasReopen = formatted.some((m: any) => m.message === '재첨삭이 시작되었습니다');
-          if (!hasReopen) {
-            const reopenMessage = {
-              sender: '시스템',
-              message: '재첨삭이 시작되었습니다',
-              time: '',
-              profile: null,
-            };
+        const hasEnded = formatted.some((m: any) => m.message === '첨삭이 종료되었습니다');
+        const hasRestarted = !formatted.some((m: any) => m.message === '재첨삭이 시작되었습니다');
 
-            const endIndex = formatted.findIndex((m: any) => m.message === '첨삭이 종료되었습니다');
-            if (endIndex !== -1) {
-              formatted.splice(endIndex, 0, reopenMessage);
-            } else {
-              formatted.push(reopenMessage);
-            }
-          }
+        if (chatRoom.isActive && hasEnded && hasRestarted) {
+          formatted.push({ sender: '시스템', message: '재첨삭이 시작되었습니다', time: '', profile: null });
         }
 
         if (!chatRoom.isActive && !formatted.some((m: any) => m.message === '첨삭이 종료되었습니다')) {
@@ -122,12 +107,7 @@ export default function Chat() {
 
         const updated = chatList.map((chat) =>
           chat.id === selectedChatId
-            ? {
-                ...chat,
-                messages: formatted,
-                hasNewMessage: false,
-                lastMessage: formatted.at(-1)?.message || '',
-              }
+            ? { ...chat, messages: formatted, hasNewMessage: false, lastMessage: formatted.at(-1)?.message || '' }
             : chat
         );
 
@@ -232,10 +212,29 @@ export default function Chat() {
 
   const handleFileUploadClick = () => fileInputRef.current?.click();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && selectedChatId !== null) {
-      updateChatWithMessage(`[파일] ${file.name}`);
+    if (!file || selectedChatId === null) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await axios.post('http://localhost:8080/files/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const fileUrl = res.data.fileUrl;
+      const fileMessage = `<파일> ${file.name} (${fileUrl})`;
+
+      await axios.post(`http://localhost:8080/chat/${selectedChatId}/messages`, {
+        senderId: user?.user_id,
+        message: fileMessage,
+      });
+
+      updateChatWithMessage(fileMessage);
+    } catch (err) {
+      console.error('파일 업로드 실패:', err);
     }
   };
 
@@ -245,8 +244,8 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatList, selectedChatId]);
 
-  const formatPortfolioIds = (ids?: number[]) =>
-    ids && ids.length ? `포트폴리오 ${ids.join(', ')}번` : '포트폴리오 없음';
+  const formatPortfolioTitles = (titles?: string[]) =>
+    titles && titles.length ? `포트폴리오 ${titles.join(', ')}` : '포트폴리오 없음';
 
   return (
     <div className="flex h-screen">
@@ -263,7 +262,7 @@ export default function Chat() {
               <UserBadge role={chat.role} profileUrl={chat.profileUrl} className="w-12 h-12" />
               <div className="flex-1">
                 <div className="font-semibold flex items-center gap-1">
-                  {chat.name} ({formatPortfolioIds(chat.portfolioIds)})
+                  {chat.name} ({formatPortfolioTitles(chat.portfolioTitles)})
                 </div>
                 <p
                   className={`text-sm truncate ${
@@ -302,7 +301,7 @@ export default function Chat() {
                 <UserBadge role={selectedChat.role} profileUrl={selectedChat.profileUrl} className="w-10 h-10" />
                 <div className="flex flex-col">
                   <span className="font-semibold text-sm">{selectedChat.name}</span>
-                  <span className="text-xs text-gray-500">{formatPortfolioIds(selectedChat.portfolioIds)}</span>
+                  <span className="text-xs text-gray-500">{formatPortfolioTitles(selectedChat.portfolioTitles)}</span>
                 </div>
               </div>
               {isEditActive && (
@@ -331,7 +330,21 @@ export default function Chat() {
                         <span className="font-semibold">{msg.sender}</span>
                       </div>
                     )}
-                    <div className="bg-gray-100 rounded px-3 py-1 inline-block">{msg.message}</div>
+                    <div className="bg-gray-100 rounded px-3 py-1 inline-block break-all">
+                      {msg.message.startsWith('<파일>') ? (() => {
+                        const matches = msg.message.match(/<파일> (.+) \((http.+)\)/);
+                        if (matches) {
+                          const [, filename, fileUrl] = matches;
+                          return (
+                            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                              {filename}
+                            </a>
+                          );
+                        } else {
+                          return msg.message;
+                        }
+                      })() : msg.message}
+                    </div>
                     {showTime && <span className="text-xs text-gray-400">{msg.time}</span>}
                   </div>
                 );
