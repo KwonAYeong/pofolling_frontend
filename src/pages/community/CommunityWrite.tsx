@@ -10,8 +10,13 @@ const CommunityWrite = () => {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [fileInputs, setFileInputs] = useState<(File | null)[]>([null, null, null]);
-  const [existingFiles, setExistingFiles] = useState<(string | null)[]>([null, null, null]);
+  const [file1, setFile1] = useState<File | null>(null);
+  const [file2, setFile2] = useState<File | null>(null);
+  const [file3, setFile3] = useState<File | null>(null);
+  const [file1Name, setFile1Name] = useState('');
+  const [file2Name, setFile2Name] = useState('');
+  const [file3Name, setFile3Name] = useState('');
+  const [existingFiles, setExistingFiles] = useState<string[]>([]);
   const [deletedFiles, setDeletedFiles] = useState<string[]>([]);
 
   const { user } = useUser();
@@ -23,16 +28,12 @@ const CommunityWrite = () => {
       if (editMode && postId && userId) {
         try {
           const res = await axios.get(`http://localhost:8080/community/post/${postId}/${userId}`);
-          const post = res.data.data;
-          setTitle(post.title);
-          setContent(post.content);
-
-          const fileUrls: string[] = post.fileUrls || [];
-          const padded = [...fileUrls.slice(0, 3), null, null, null].slice(0, 3);
-          setExistingFiles(padded);
+          const data = res.data.data;
+          setTitle(data.title);
+          setContent(data.content);
+          setExistingFiles(data.fileUrls || []);
         } catch (err) {
-          console.error('수정할 게시글 불러오기 실패', err);
-          alert('게시글을 불러올 수 없습니다.');
+          console.error('게시글 불러오기 실패:', err);
         }
       }
     };
@@ -40,64 +41,69 @@ const CommunityWrite = () => {
     fetchPost();
   }, [editMode, postId, userId]);
 
-  const handleSingleFileChange = (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null;
+  useEffect(() => {
+    if (editMode && existingFiles.length) {
+      setFile1Name(existingFiles[0] ? decodeURIComponent(existingFiles[0].split('/').pop()!) : '');
+      setFile2Name(existingFiles[1] ? decodeURIComponent(existingFiles[1].split('/').pop()!) : '');
+      setFile3Name(existingFiles[2] ? decodeURIComponent(existingFiles[2].split('/').pop()!) : '');
+    }
+  }, [existingFiles]);
 
-    const newFiles = [...fileInputs];
-    newFiles[index] = selectedFile;
-    setFileInputs(newFiles);
-
-    const existing = existingFiles[index];
-    if (existing) {
-      setDeletedFiles((prev) => [...prev, existing]);
-      const updatedExisting = [...existingFiles];
-      updatedExisting[index] = null;
-      setExistingFiles(updatedExisting);
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0] || null;
+    if (index === 1) {
+      setFile1(file);
+      setFile1Name(file?.name || '');
+    }
+    if (index === 2) {
+      setFile2(file);
+      setFile2Name(file?.name || '');
+    }
+    if (index === 3) {
+      setFile3(file);
+      setFile3Name(file?.name || '');
     }
   };
 
-  const handleDeleteExistingFile = (index: number) => {
-    const existing = existingFiles[index];
-    if (existing) {
-      setDeletedFiles((prev) => [...prev, existing]);
-      const updatedExisting = [...existingFiles];
-      updatedExisting[index] = null;
-      setExistingFiles(updatedExisting);
+  const handleDeleteFile = (index: number) => {
+    if (index === 1) {
+      if (existingFiles[0]) setDeletedFiles(prev => [...prev, existingFiles[0]]);
+      setFile1(null);
+      setFile1Name('');
     }
+    if (index === 2) {
+      if (existingFiles[1]) setDeletedFiles(prev => [...prev, existingFiles[1]]);
+      setFile2(null);
+      setFile2Name('');
+    }
+    if (index === 3) {
+      if (existingFiles[2]) setDeletedFiles(prev => [...prev, existingFiles[2]]);
+      setFile3(null);
+      setFile3Name('');
+    }
+
+    // 기존 파일도 제거 (UI에서)
+    setExistingFiles(prev => {
+      const copy = [...prev];
+      copy[index - 1] = '';
+      return copy;
+    });
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim()) {
-      alert('제목과 내용을 모두 입력하세요.');
-      return;
-    }
+    if (!userId) return;
 
-    if (!userId) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    if (file1) formData.append('files', file1);
+    if (file2) formData.append('files', file2);
+    if (file3) formData.append('files', file3);
+    formData.append('deletedFiles', JSON.stringify(deletedFiles));
 
     try {
-      const formData = new FormData();
-      const data = {
-        title,
-        content,
-        deleteFileUrls: deletedFiles,
-      };
-
-      formData.append(
-        'data',
-        new Blob([JSON.stringify(data)], { type: 'application/json' })
-      );
-
-      fileInputs.forEach((file) => {
-        if (file) {
-          formData.append('files', file);
-        }
-      });
-
       if (editMode && postId) {
-        await axios.patch(
+        await axios.put(
           `http://localhost:8080/community/post/${postId}/${userId}`,
           formData,
           { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -114,62 +120,55 @@ const CommunityWrite = () => {
 
       navigate('/community');
     } catch (err) {
-      console.error('글 저장 실패', err);
-      alert('글 저장 중 오류가 발생했습니다.');
+      console.error('글 등록/수정 실패:', err);
+      alert('글 처리 중 오류가 발생했습니다.');
     }
   };
 
-  if (!userId) {
-    return <div className="p-4 text-center text-red-500">로그인이 필요합니다.</div>;
-  }
-
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <h2 className="text-xl font-bold">{editMode ? '게시글 수정' : '게시글 작성'}</h2>
+    <div className="max-w-3xl mx-auto p-6">
+      <h1 className="text-xl font-bold mb-4">{editMode ? '게시글 수정' : '게시글 작성'}</h1>
 
       <input
         type="text"
-        className="w-full border p-2 rounded"
         placeholder="제목"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        className="w-full border rounded p-2 mb-4"
       />
 
       <textarea
-        className="w-full border p-2 rounded min-h-[200px]"
         placeholder="내용"
         value={content}
         onChange={(e) => setContent(e.target.value)}
+        className="w-full border rounded p-2 h-48 mb-4"
       />
 
-      <div className="space-y-2 text-sm text-gray-600">
-        {[0, 1, 2].map((idx) => {
-          const file = fileInputs[idx];
-          const existing = existingFiles[idx];
+      {/* 파일 선택 + 파일명 + 삭제 */}
+      <div className="space-y-2 mb-6">
+        {[1, 2, 3].map((num) => {
+          const file = num === 1 ? file1 : num === 2 ? file2 : file3;
+          const fileName = num === 1 ? file1Name : num === 2 ? file2Name : file3Name;
 
           return (
-            <div key={idx} className="flex flex-col gap-1">
-              <input type="file" onChange={handleSingleFileChange(idx)} />
+            <div key={num} className="flex items-center gap-3">
+              <label className="bg-gray-100 px-3 py-1 rounded cursor-pointer text-sm text-gray-700 hover:bg-gray-200">
+                파일 선택
+                <input type="file" className="hidden" onChange={(e) => handleFileChange(e, num)} />
+              </label>
 
-              {/* ✅ 기존 파일만 표시 (새 파일 이름은 브라우저 기본 UI로만 보여줌) */}
-              {existing && !file && (
-                <div className="flex items-center gap-2">
-                  <a
-                    href={existing}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline max-w-[250px] truncate"
-                  >
-                    {decodeURIComponent(existing.split('/').pop()!)}
-                  </a>
+              {fileName ? (
+                <>
+                  <span className="text-sm text-gray-600 max-w-[220px] truncate">{fileName}</span>
                   <button
-                    type="button"
-                    className="text-red-500 text-xs underline"
-                    onClick={() => handleDeleteExistingFile(idx)}
+                    onClick={() => handleDeleteFile(num)}
+                    className="text-red-500 text-sm"
                   >
                     삭제
                   </button>
-                </div>
+                </>
+              ) : (
+                <span className="text-sm text-gray-400">선택된 파일 없음</span>
               )}
             </div>
           );
@@ -179,7 +178,7 @@ const CommunityWrite = () => {
       <div className="flex justify-end">
         <button
           onClick={handleSubmit}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           저장
         </button>
