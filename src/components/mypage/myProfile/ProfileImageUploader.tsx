@@ -1,29 +1,27 @@
 import { useRef, useState, useEffect } from 'react';
 
 interface Props {
-  profileFile: File | null;
-  setProfileFile: (file: File | null) => void;
+  profileImageUrl: string | null;
+  setSelectedFile: (file: File | null) => void;
 }
 
-const ProfileImageUploader = ({ profileFile, setProfileFile }: Props) => {
+const ProfileImageUploader = ({ profileImageUrl, setSelectedFile }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profileFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewUrl(reader.result as string);
-      reader.readAsDataURL(profileFile);
-    } else {
-      setPreviewUrl(null);
-    }
-  }, [profileFile]);
+    setPreviewUrl(profileImageUrl);
+  }, [profileImageUrl]);
 
   const handleImageClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setProfileFile(file);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const preview = URL.createObjectURL(file);
+    setPreviewUrl(preview);
+    setSelectedFile(file); // ✅ 부모 컴포넌트가 저장 시 처리
   };
 
   return (

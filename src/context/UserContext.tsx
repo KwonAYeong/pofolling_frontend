@@ -5,6 +5,7 @@ import { Portfolio } from 'types/portfolio';
 export type UserRole = 'MENTEE' | 'MENTOR';
 
 export interface User {
+  profileImage?: string | undefined;
   user_id: number;
   nickname?: string;
   role: UserRole;
@@ -52,7 +53,7 @@ const dummyUsers: User[] = [
 ];
 
 // 현재 로그인 유저는 기본적으로 user_id === 1   (kay)
-const initialUser = dummyUsers.find(user => user.user_id === 1) || dummyUsers[0];
+const initialUser = dummyUsers.find(user => user.user_id === 4) || dummyUsers[0];
 
 
 const UserContext = createContext<UserContextType | undefined>(undefined);

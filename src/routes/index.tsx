@@ -6,7 +6,6 @@ import Layout from 'components/layout/Layout';
 import CommunityRoutes from './community';
 import EditRoutes from './edit';
 import MypageRoutes from './mypage';
-import RecruitRoutes from './recruit';
 import SignupRoutes from './signup';
 
 const AppRoutes = () => {
@@ -16,7 +15,6 @@ const AppRoutes = () => {
         {CommunityRoutes}
         {EditRoutes}
         {MypageRoutes}
-        {RecruitRoutes}
         {SignupRoutes}
       </Route>
     </Routes>

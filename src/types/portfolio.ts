@@ -1,12 +1,10 @@
-
-
 export interface Portfolio {
   requestCount?: number;
   nickname: string | undefined;
   portfolioId: number;
   content: string;
-  createdAt: string;
   updatedAt: string;
+  requestedAt?: string;
   fileUrl: string;
   status: 'REGISTERED' | 'REQUESTED' | 'IN_PROGRESS' | 'COMPLETED';
   title: string;

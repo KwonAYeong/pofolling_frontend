@@ -55,7 +55,7 @@ const MyPofolDetail = () => {
     if (!confirmCancel) return;
 
     try {
-      await axios.post(`http://localhost:8080/mentoring/cancel/${portfolio?.portfolioId}`);
+      await axios.patch(`http://localhost:8080/edit-request/${portfolio?.portfolioId}/cancel`);
       alert('첨삭 요청이 취소되었습니다.');
       navigate('/mypage/portfolio');
     } catch (error) {
@@ -79,8 +79,8 @@ const MyPofolDetail = () => {
         userRole={user?.role}
         showUserBadge={false}
         nickname={portfolio.nickname}
-        requestedAt={portfolio.createdAt}
-        updatedDate={portfolio.updatedAt}
+        requestedAt={portfolio.requestedAt}
+        updatedAt={portfolio.updatedAt}
         downloadId={portfolio.portfolioId}
       >
       <div className="flex gap-2">
