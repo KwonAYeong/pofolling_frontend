@@ -175,9 +175,25 @@ const CommunityDetail = () => {
 
       {post.fileUrls?.length > 0 && (
         <div className="mt-4 space-y-2">
-          {post.fileUrls.map((url, idx) => (
-            <img key={idx} src={url} alt={`첨부이미지-${idx}`} className="w-full rounded" />
-          ))}
+          {post.fileUrls.map((url, idx) => {
+            const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(url);
+            const fileName = decodeURIComponent(url.split('/').pop() || `첨부파일-${idx + 1}`);
+            return isImage ? (
+              <img key={idx} src={url} alt={fileName} className="w-full rounded" />
+            ) : (
+              <div key={idx}>
+                <a
+                  href={url}
+                  download
+                  className="text-blue-600 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📎 {fileName}
+                </a>
+              </div>
+            );
+          })}
         </div>
       )}
 
