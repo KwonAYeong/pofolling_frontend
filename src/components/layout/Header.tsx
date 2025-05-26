@@ -1,7 +1,6 @@
 // 로그인/로그아웃 상태 분기 + 멘토/멘티 테두리 색상
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser,UserRole } from '../../context/UserContext';
-import NotificationBell from './NotificationBell';
 import UserBadge from 'components/common/UserBadge';
 
 const Header = () => {
@@ -44,14 +43,12 @@ const Header = () => {
           첨삭
           </button>
         <Link to="/community" className="hover:text-blue-600">커뮤니티</Link>
-        <Link to="/recruit" className="hover:text-blue-600">채용정보</Link>
       </nav>
 
       {/* 오른쪽 - 로그인 상태/비로그인 상태 분기 */}
       <div className="flex items-center space-x-4">
       {isLoggedIn && user ? (
           <>
-            <NotificationBell />
             <button
               onClick={() => navigate('/mypage')}
               className="flex items-center gap-2 group"

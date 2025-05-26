@@ -1,5 +1,3 @@
-
-
 export interface Portfolio {
   requestCount?: number;
   nickname: string | undefined;
