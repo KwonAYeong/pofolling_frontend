@@ -28,9 +28,10 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const cleanMessage = (message: string) => message.replace(/\s*\([^)]*\)\s*$/, '');
+
   useEffect(() => {
     if (!user?.user_id) return;
-
     const fetchChatList = async () => {
       try {
         const res = await axios.get(`http://localhost:8080/chat/list/${user.user_id}`);
@@ -67,7 +68,6 @@ export default function Chat() {
         console.error('채팅방 목록 불러오기 실패', err);
       }
     };
-
     fetchChatList();
   }, [user]);
 
@@ -89,7 +89,7 @@ export default function Chat() {
 
         const formatted = messages.map((msg: any) => ({
           sender: msg.senderId === user?.user_id ? '나' : msg.senderNickname ?? '시스템',
-          message: msg.message,
+          message: cleanMessage(msg.message),
           time: msg.sentAt?.slice(11, 16) || '',
           profile: msg.senderId === user?.user_id ? null : msg.senderProfileImage,
         }));
@@ -97,8 +97,14 @@ export default function Chat() {
         const hasEnded = formatted.some((m: any) => m.message === '첨삭이 종료되었습니다');
         const hasRestarted = !formatted.some((m: any) => m.message === '재첨삭이 시작되었습니다');
 
-        if (chatRoom.isActive && hasEnded && hasRestarted) {
-          formatted.push({ sender: '시스템', message: '재첨삭이 시작되었습니다', time: '', profile: null });
+        if (chatRoom.isActive && hasEnded && hasRestarted && chatRoom.portfolioTitles?.length) {
+          const titles = chatRoom.portfolioTitles.join(', ');
+          formatted.push({
+            sender: '시스템',
+            message: `“${titles}” 첨삭이 추가되었습니다.`,
+            time: '',
+            profile: null,
+          });
         }
 
         if (!chatRoom.isActive && !formatted.some((m: any) => m.message === '첨삭이 종료되었습니다')) {
@@ -116,7 +122,6 @@ export default function Chat() {
         console.error('메시지 불러오기 실패', err);
       }
     };
-
     fetchMessages();
   }, [selectedChatId]);
 
@@ -245,7 +250,7 @@ export default function Chat() {
   }, [chatList, selectedChatId]);
 
   const formatPortfolioTitles = (titles?: string[]) =>
-    titles && titles.length ? `포트폴리오 ${titles.join(', ')}` : '포트폴리오 없음';
+    titles && titles.length ? ` ${titles.join(', ')}` : '포트폴리오 없음';
 
   return (
     <div className="flex h-screen">
