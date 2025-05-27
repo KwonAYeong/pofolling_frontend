@@ -95,19 +95,14 @@ const CommunityWrite = () => {
 
   const formData = new FormData();
 
-  if (editMode) {
-    // 수정 모드일 때는 JSON으로 묶어서 'data'로 보냄
-    const data = { title, content, deleteFileUrls };
-    formData.append(
-      'data',
-      new Blob([JSON.stringify(data)], { type: 'application/json' })
-    );
-  } else {
-    // 등록 모드일 때는 각각 따로 보냄
-    formData.append('title', title);
-    formData.append('content', content);
-    formData.append('deleteFileUrls', JSON.stringify(deleteFileUrls));
-  }
+ // 수정이든 등록이든 동일하게 처리
+formData.append('title', title);
+formData.append('content', content);
+deleteFileUrls.forEach((url) => {
+  formData.append('deleteFileUrls', url);
+});
+
+
 
   if (file1) formData.append('files', file1);
   if (file2) formData.append('files', file2);
