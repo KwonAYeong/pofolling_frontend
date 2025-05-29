@@ -174,7 +174,7 @@ const Request = () => {
       </section>
 
       {/* 첨삭 요청 버튼 */}
-      {registered.length > 0 && (
+      {(registered.length > 0 || completed.length > 0) && (
         <div className="mt-6 flex justify-end">
           <Button
             variant="primary"
