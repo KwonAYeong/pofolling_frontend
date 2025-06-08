@@ -29,8 +29,13 @@ const PostCard = ({
 }: PostCardProps) => {
   return (
     <div className="p-4 border rounded hover:bg-gray-50 cursor-pointer">
-      <h2 className="text-lg font-semibold truncate">{title}</h2>
-      <p className="text-sm text-gray-700 mt-1 line-clamp-2">{preview}</p>
+  <h2 className="text-lg font-semibold truncate">{title}</h2>
+
+  <div className="max-w-[600px]">
+    <p className="text-sm text-gray-700 mt-1 truncate">
+      {preview.split('\n')[0] || ' '}
+    </p>
+  </div>
 
       <div className="flex items-center justify-between text-xs text-gray-500 mt-3">
         <div className="flex items-center gap-2">

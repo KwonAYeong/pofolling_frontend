@@ -24,7 +24,10 @@ const CommunityList = () => {
       try {
         const res = await axios.get('http://localhost:8080/community/post');
         const content = res.data.data.content;
-
+ console.log('Community posts:', content.map((post: any) => ({
+        postId: post.postId,
+        profileImage: post.profileImage,
+      })));
         // ✅ 최신순 정렬
         const sorted = content.sort(
           (a: Post, b: Post) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -65,7 +68,7 @@ const CommunityList = () => {
                 title={post.title}
                 preview={post.content}
                 writer={post.nickname}
-                writerProfileUrl={post.profileImage ?? '/default-profile.png'}
+                writerProfileUrl={post.profileImage?.trim() ? post.profileImage : '/default-profile.png'}
                 timeAgo={new Date(post.createdAt).toLocaleDateString()}
                 likeCount={post.likeCount}
                 viewCount={post.viewCount}

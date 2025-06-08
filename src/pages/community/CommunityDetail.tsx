@@ -147,7 +147,10 @@ const CommunityDetail = () => {
       <h1 className="text-2xl font-bold">{post.title}</h1>
 
       <div className="flex items-center gap-2 text-sm text-gray-600">
-        <img src={post.profileImage ?? '/default-profile.png'} className="w-6 h-6 rounded-full" />
+        <img
+          src={post.profileImage?.trim() ? post.profileImage : '/default-profile.png'}
+          className="w-6 h-6 rounded-full"
+        />
         <span>{post.nickname}</span>
         <span className="text-gray-400">· {new Date(post.createdAt).toLocaleString()}</span>
       </div>
@@ -228,8 +231,8 @@ const CommunityDetail = () => {
           <li key={reply.replyId} className="border-b pb-3">
             <div className="flex gap-2 text-sm">
               <img
-                src={reply.profileImage ?? '/default-profile.png'}
-                className="w-5 h-5 rounded-full"
+                src={post.profileImage?.trim() ? post.profileImage : '/default-profile.png'}
+                className="w-=5 h-5 rounded-full"
               />
               <span className="font-medium">{reply.nickname}</span>
               <span className="text-gray-400">

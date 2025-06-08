@@ -8,14 +8,14 @@ import ChatButton from 'components/common/ChatButton';
 import { MenuItem } from './Sidebar';
 
 const Layout = () => {
-  const { pathname } = useLocation();
   const { user } = useUser();
+  const { pathname } = useLocation();
 
   const isMypage = pathname.startsWith('/mypage');
   const isEdit = pathname.startsWith('/edit');
   const isChatPage = pathname.startsWith('/chat');
 
-let sidebarMenu: MenuItem[] = [];
+  let sidebarMenu: MenuItem[] = [];
 
   if (isMypage && user) {
     sidebarMenu = mypageSidebarMenu(user.role);

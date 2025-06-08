@@ -45,8 +45,8 @@ export default function Chat() {
             id: chat.chatRoomId,
             name: isSender ? chat.receiverNickname : chat.senderNickname,
             profileUrl: isSender
-              ? chat.receiverProfileImage || '/profileEX.png'
-              : chat.senderProfileImage || '/profileEX.png',
+              ? chat.receiverProfileImage || '/default-profile.png'
+              : chat.senderProfileImage || '/default-profile.png',
             messages: [],
             chatRoomId: chat.chatRoomId,
             portfolioIds: chat.portfolioIds || [],
@@ -331,7 +331,7 @@ export default function Chat() {
                   <div key={idx} className={`flex flex-col text-sm ${msg.sender === '나' ? 'items-end text-right' : 'items-start text-left'}`}>
                     {msg.sender !== '나' && (
                       <div className="flex items-center gap-2">
-                        <img src={msg.profile || '/profileEX.png'} alt="" className="w-6 h-6 rounded-full" />
+                        <img src={msg.profile || '/default-profile.png'} alt="" className="w-6 h-6 rounded-full" />
                         <span className="font-semibold">{msg.sender}</span>
                       </div>
                     )}
