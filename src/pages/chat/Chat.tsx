@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useUser } from 'context/UserContext';
 import UserBadge from '../../components/common/UserBadge';
+import { createStompClient } from '../../lib/websocket';
+import { Client } from '@stomp/stompjs';
 
 interface ChatItem {
   id: number;
@@ -156,10 +158,11 @@ export default function Chat() {
     if (!chatRoom) return;
 
     try {
-      await axios.post(`http://localhost:8080/chat/${chatRoom.chatRoomId}/messages`, {
+      clientRef.current?.publish({ destination: '/app/chat/message', body: JSON.stringify({
+        chatRoomId: chatRoom.chatRoomId,
         senderId: user?.user_id,
         message: newMessage,
-      });
+        fileUrl: null }) });
       updateChatWithMessage(newMessage);
       setNewMessage('');
     } catch (err) {
@@ -245,7 +248,26 @@ export default function Chat() {
 
   const handleBack = () => setSelectedChatId(null);
 
-  useEffect(() => {
+  
+  const clientRef = useRef<Client | null>(null);
+
+    useEffect(() => {
+    if (!selectedChatId || !user?.user_id) return;
+
+    clientRef.current = createStompClient({
+      chatRoomId: selectedChatId,
+      onMessage: (msg) => {
+        updateChatWithMessage(msg.message); // TODO: msg.message만 아니라 msg DTO 전체를 반영하려면 수정
+      }
+    });
+
+    return () => {
+      clientRef.current?.deactivate();
+    };
+  }, [selectedChatId]);
+
+
+    useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatList, selectedChatId]);
 
