@@ -1,15 +1,17 @@
-
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
 export const createStompClient = ({
   chatRoomId,
   onMessage,
+  onConnect,
 }: {
   chatRoomId: number;
   onMessage: (msg: any) => void;
+  onConnect?: () => void; 
 }): Client => {
-  const socket = new SockJS('http://localhost:8080/ws');
+  const socket = new SockJS('https://f050-58-225-238-102.ngrok-free.app/ws');
+
   const client = new Client({
     webSocketFactory: () => socket,
     reconnectDelay: 5000,
@@ -19,6 +21,7 @@ export const createStompClient = ({
         const msg = JSON.parse(message.body);
         onMessage(msg);
       });
+      if (onConnect) onConnect();
     },
     onStompError: (frame) => {
       console.error('[❌ STOMP ERROR]', frame);
@@ -28,3 +31,4 @@ export const createStompClient = ({
   client.activate();
   return client;
 };
+
