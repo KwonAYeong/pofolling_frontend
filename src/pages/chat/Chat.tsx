@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useUser } from 'context/UserContext';
 import UserBadge from '../../components/common/UserBadge';
@@ -26,9 +26,11 @@ export default function Chat() {
   const [selectedChat, setSelectedChat] = useState<ChatItem | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isEditActive, setIsEditActive] = useState(true);
+  const [isWsConnected, setIsWsConnected] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const clientRef = useRef<Client | null>(null);
 
   const cleanMessage = (message: string) => message.replace(/\s*\([^)]*\)\s*$/, '');
 
@@ -79,55 +81,7 @@ export default function Chat() {
     setIsEditActive(chat?.isActive ?? true);
   }, [selectedChatId, chatList]);
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!selectedChatId) return;
-      const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
-      if (!chatRoom) return;
-
-      try {
-        const res = await axios.get(`http://localhost:8080/chat/${chatRoom.chatRoomId}/messages`);
-        const { messages } = res.data;
-
-        const formatted = messages.map((msg: any) => ({
-          sender: msg.senderId === user?.user_id ? '나' : msg.senderNickname ?? '시스템',
-          message: cleanMessage(msg.message),
-          time: msg.sentAt?.slice(11, 16) || '',
-          profile: msg.senderId === user?.user_id ? null : msg.senderProfileImage,
-        }));
-
-        const hasEnded = formatted.some((m: any) => m.message === '첨삭이 종료되었습니다');
-        const hasRestarted = !formatted.some((m: any) => m.message === '재첨삭이 시작되었습니다');
-
-        if (chatRoom.isActive && hasEnded && hasRestarted && chatRoom.portfolioTitles?.length) {
-          const titles = chatRoom.portfolioTitles.join(', ');
-          formatted.push({
-            sender: '시스템',
-            message: `“${titles}” 첨삭이 추가되었습니다.`,
-            time: '',
-            profile: null,
-          });
-        }
-
-        if (!chatRoom.isActive && !formatted.some((m: any) => m.message === '첨삭이 종료되었습니다')) {
-          formatted.push({ sender: '시스템', message: '첨삭이 종료되었습니다', time: '', profile: null });
-        }
-
-        const updated = chatList.map((chat) =>
-          chat.id === selectedChatId
-            ? { ...chat, messages: formatted, hasNewMessage: false, lastMessage: formatted.at(-1)?.message || '' }
-            : chat
-        );
-
-        setChatList(updated);
-      } catch (err) {
-        console.error('메시지 불러오기 실패', err);
-      }
-    };
-    fetchMessages();
-  }, [selectedChatId]);
-
-  const updateChatWithMessage = (message: string) => {
+  const updateChatWithMessage = useCallback((message: string) => {
     const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
     if (!chatRoom) return;
 
@@ -150,66 +104,89 @@ export default function Chat() {
       ...updated.filter((c) => !c.isActive),
     ];
     setChatList(sorted);
-  };
+  }, [chatList, selectedChatId]);
+
+  useEffect(() => {
+    if (!selectedChatId || !user?.user_id) return;
+
+    const client = createStompClient({
+      chatRoomId: selectedChatId,
+      onMessage: (msg) => {
+        updateChatWithMessage(msg.message);
+      },
+      onConnect: () => {
+        setIsWsConnected(true);
+      },
+    });
+
+    clientRef.current = client;
+
+    return () => {
+      client.deactivate();
+      setIsWsConnected(false);
+    };
+  }, [selectedChatId, user?.user_id, updateChatWithMessage]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!selectedChatId) return;
+      const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
+      if (!chatRoom) return;
+
+      try {
+        const res = await axios.get(`http://localhost:8080/chat/${chatRoom.chatRoomId}/messages`);
+        const { messages } = res.data;
+
+        const formatted = messages.map((msg: any) => ({
+          sender: msg.senderId === user?.user_id ? '나' : msg.senderNickname ?? '시스템',
+          message: cleanMessage(msg.message),
+          time: msg.sentAt?.slice(11, 16) || '',
+          profile: msg.senderId === user?.user_id ? null : msg.senderProfileImage,
+        }));
+
+        const updated = chatList.map((chat) =>
+          chat.id === selectedChatId
+            ? { ...chat, messages: formatted, hasNewMessage: false, lastMessage: formatted.at(-1)?.message || '' }
+            : chat
+        );
+
+        setChatList(updated);
+      } catch (err) {
+        console.error('메시지 불러오기 실패', err);
+      }
+    };
+    fetchMessages();
+  }, [selectedChatId, chatList, user?.user_id]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || selectedChatId === null || !isEditActive) return;
+
     const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
     if (!chatRoom) return;
 
     try {
-      clientRef.current?.publish({ destination: '/app/chat/message', body: JSON.stringify({
-        chatRoomId: chatRoom.chatRoomId,
-        senderId: user?.user_id,
-        message: newMessage,
-        fileUrl: null }) });
+      if (clientRef.current && isWsConnected) {
+        clientRef.current.publish({
+          destination: '/app/chat/message',
+          body: JSON.stringify({
+            chatRoomId: chatRoom.chatRoomId,
+            senderId: user?.user_id,
+            message: newMessage,
+            fileUrl: null,
+          }),
+        });
+      } else {
+        await axios.post(`http://localhost:8080/chat/${chatRoom.chatRoomId}/messages`, {
+          senderId: user?.user_id,
+          message: newMessage,
+        });
+      }
+
       updateChatWithMessage(newMessage);
       setNewMessage('');
     } catch (err) {
       console.error('메시지 전송 실패', err);
-    }
-  };
-
-  const handleEndEdit = async () => {
-    if (selectedChatId === null) return;
-    const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
-    if (!chatRoom) return;
-
-    try {
-      const res = await axios.patch(`http://localhost:8080/chat/${chatRoom.chatRoomId}/deactivate`);
-      const updatedRoom = res.data;
-
-      const systemMessage = { sender: '시스템', message: '첨삭이 종료되었습니다', time: '', profile: null };
-
-      setChatList(prevList =>
-        prevList.map(chat =>
-          chat.id === updatedRoom.chatRoomId
-            ? {
-                ...chat,
-                isActive: updatedRoom.isActive,
-                lastMessage: updatedRoom.lastMessage || '첨삭이 종료되었습니다',
-                messages: [...chat.messages, systemMessage],
-                hasNewMessage: updatedRoom.hasNewMessage,
-              }
-            : chat
-        )
-      );
-
-      setSelectedChat(prev =>
-        prev
-          ? {
-              ...prev,
-              isActive: updatedRoom.isActive,
-              lastMessage: updatedRoom.lastMessage || '첨삭이 종료되었습니다',
-              messages: [...prev.messages, systemMessage],
-            }
-          : prev
-      );
-
-      setIsEditActive(false);
-      setNewMessage('');
-    } catch (err) {
-      console.error('첨삭 종료 실패', err);
+      alert('메시지 전송에 실패했습니다. 다시 시도해보세요.');
     }
   };
 
@@ -217,6 +194,11 @@ export default function Chat() {
     const now = new Date();
     return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   };
+
+  const formatPortfolioTitles = (titles?: string[]) =>
+    titles && titles.length ? ` ${titles.join(', ')}` : '포트폴리오 없음';
+
+  const handleBack = () => setSelectedChatId(null);
 
   const handleFileUploadClick = () => fileInputRef.current?.click();
 
@@ -246,35 +228,57 @@ export default function Chat() {
     }
   };
 
-  const handleBack = () => setSelectedChatId(null);
+  const handleEndEdit = async () => {
+    if (selectedChatId === null) return;
+    const chatRoom = chatList.find((chat) => chat.id === selectedChatId);
+    if (!chatRoom) return;
 
-  
-  const clientRef = useRef<Client | null>(null);
+    try {
+      const res = await axios.patch(`http://localhost:8080/chat/${chatRoom.chatRoomId}/deactivate`);
+      const updatedRoom = res.data;
 
-    useEffect(() => {
-    if (!selectedChatId || !user?.user_id) return;
+      const systemMessage = { sender: '시스템', message: '첨삭이 종료되었습니다', time: '', profile: null };
 
-    clientRef.current = createStompClient({
-      chatRoomId: selectedChatId,
-      onMessage: (msg) => {
-        updateChatWithMessage(msg.message); // TODO: msg.message만 아니라 msg DTO 전체를 반영하려면 수정
-      }
-    });
+      setChatList(prevList =>
+        prevList.map(chat =>
+          chat.id === updatedRoom.chatRoomId
+            ? {
+                ...chat,
+                isActive: updatedRoom.isActive,
+                lastMessage: updatedRoom.lastMessage || '첨삭이 종료되었습니다',
+                messages: [...chat.messages, systemMessage],
+                hasNewMessage: updatedRoom.hasNewMessage,
+              }
+            : chat
+        )
+      );
 
-    return () => {
-      clientRef.current?.deactivate();
-    };
-  }, [selectedChatId]);
+      setSelectedChat((prev) => {
+        if (prev && prev.id === updatedRoom.chatRoomId) {
+          return {
+            ...prev,
+            isActive: updatedRoom.isActive,
+            lastMessage: updatedRoom.lastMessage || '첨삭이 종료되었습니다',
+            messages: [...prev.messages, systemMessage],
+            hasNewMessage: updatedRoom.hasNewMessage,
+          } as ChatItem;
+        }
+        return prev;
+      });
 
+      setIsEditActive(false);
+      setNewMessage('');
+    } catch (err) {
+      console.error('첨삭 종료 실패', err);
+    }
+  };
 
-    useEffect(() => {
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatList, selectedChatId]);
+  }, [selectedChat?.messages.length]);
 
-  const formatPortfolioTitles = (titles?: string[]) =>
-    titles && titles.length ? ` ${titles.join(', ')}` : '포트폴리오 없음';
 
-  return (
+   return (
     <div className="flex h-screen">
       <div className="w-[300px] border-r bg-white overflow-y-auto">
         <ul>
